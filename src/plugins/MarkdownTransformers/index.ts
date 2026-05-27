@@ -51,7 +51,7 @@ import {$createImageNode, $isImageNode, ImageNode} from '../../nodes/ImageNode';
 import {$createTweetNode, $isTweetNode, TweetNode} from '../../nodes/TweetNode';
 import emojiList from '../../utils/emoji-list';
 
-export const HR: ElementTransformer = {
+export const HR: ElementTransformer & {triggerOnEnter?: boolean} = {
   dependencies: [HorizontalRuleNode],
   export: (node: LexicalNode) => {
     return $isHorizontalRuleNode(node) ? '***' : null;
@@ -132,7 +132,7 @@ export const EQUATION: TextMatchTransformer = {
   type: 'text-match',
 };
 
-export const TWEET: ElementTransformer = {
+export const TWEET: ElementTransformer & {triggerOnEnter?: boolean} = {
   dependencies: [TweetNode],
   export: node => {
     if (!$isTweetNode(node)) {

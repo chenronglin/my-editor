@@ -24,11 +24,11 @@ export interface CodeHighlightConfig {
 
 const NULL_LANG_PRISM_TOKENIZER = {
   ...PrismTokenizer,
-  defaultLanguage: null,
+  defaultLanguage: null as any,
 };
 const NULL_LANG_SHIKI_TOKENIZER = {
   ...ShikiTokenizer,
-  defaultLanguage: null,
+  defaultLanguage: null as any,
 };
 
 /**
