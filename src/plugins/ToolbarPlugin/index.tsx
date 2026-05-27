@@ -12,8 +12,11 @@ import {$isHeadingNode} from '@lexical/rich-text';
 import {$findMatchingParent, mergeRegister} from '@lexical/utils';
 import {
   $addUpdateTag,
+  $getRoot,
   $getSelection,
+  $isElementNode,
   $isRangeSelection,
+  $isTextNode,
   COMMAND_PRIORITY_CRITICAL,
   CommandPayloadType,
   FORMAT_TEXT_COMMAND,
@@ -31,6 +34,7 @@ import {
   blockTypeToBlockName,
   useToolbarState,
 } from '../../context/ToolbarContext';
+import {$isSuggestionNode} from '../../nodes/SuggestionNode';
 import DropDown, {DropDownItem} from '../../ui/DropDown';
 import {isKeyboardInput} from '../../utils/focusUtils';
 import {formatHeading, formatParagraph} from './utils';
@@ -126,6 +130,30 @@ function $findTopLevelElement(node: LexicalNode) {
   return topLevelElement;
 }
 
+function getVisibleFinalText(node: LexicalNode): string {
+  if ($isSuggestionNode(node) && node.getSuggestionType() === 'deletion') {
+    return '';
+  }
+
+  if ($isTextNode(node)) {
+    return node.getTextContent();
+  }
+
+  if ($isElementNode(node)) {
+    return node.getChildren().map(getVisibleFinalText).join('');
+  }
+
+  return '';
+}
+
+function getCharacterCount(text: string): number {
+  return Array.from(text.replace(/\s/g, '')).length;
+}
+
+function $getFinalCharacterCount(): number {
+  return getCharacterCount(getVisibleFinalText($getRoot()));
+}
+
 export default function ToolbarPlugin({
   editor,
   activeEditor,
@@ -144,6 +172,7 @@ export default function ToolbarPlugin({
   setActiveEditor: Dispatch<LexicalEditor>;
 }): JSX.Element {
   const [isEditable, setIsEditable] = useState(() => editor.isEditable());
+  const [finalCharacterCount, setFinalCharacterCount] = useState(0);
   const [selectedBlockKey, setSelectedBlockKey] = useState<NodeKey>();
   const {toolbarState, updateToolbarState} = useToolbarState();
 
@@ -199,6 +228,18 @@ export default function ToolbarPlugin({
     updateToolbarState,
     $handleHeadingNode,
   ]);
+
+  useEffect(() => {
+    editor.getEditorState().read(() => {
+      setFinalCharacterCount($getFinalCharacterCount());
+    });
+
+    return editor.registerUpdateListener(({editorState}) => {
+      editorState.read(() => {
+        setFinalCharacterCount($getFinalCharacterCount());
+      });
+    });
+  }, [editor]);
 
   useEffect(() => {
     return editor.registerCommand(
@@ -328,6 +369,13 @@ export default function ToolbarPlugin({
             : '修订中'
           : '开启修订'}
       </button>
+      <div className="toolbar-spacer" />
+      <div
+        className="toolbar-word-count"
+        title="按最终模式统计：新增计入，删除不计入"
+        aria-label={`最终字数 ${finalCharacterCount}`}>
+        最终字数：{finalCharacterCount}
+      </div>
     </div>
   );
 }

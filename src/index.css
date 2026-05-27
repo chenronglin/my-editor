@@ -147,6 +147,7 @@ header h1 {
   background: #fff;
   position: relative;
   display: block;
+  overflow: hidden;
   border-bottom-left-radius: 10px;
   border-bottom-right-radius: 10px;
 }
@@ -171,21 +172,23 @@ header h1 {
 }
 
 .editor-scroller {
-  height: 75vh;
+  height: clamp(360px, calc(100vh - 220px), 720px);
   max-width: 100%;
   border: 0;
   display: flex;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   position: relative;
   outline: 0;
   z-index: 0;
-  resize: vertical;
 }
 
 .editor {
   flex: auto;
+  min-width: 0;
   max-width: 100%;
   position: relative;
-  resize: vertical;
   z-index: -1;
 }
 
@@ -1721,6 +1724,23 @@ button.toolbar-item.track-changes {
   width: 1px;
   background-color: #eee;
   margin: 0 4px;
+}
+
+.toolbar-spacer {
+  flex: 1 1 auto;
+  min-width: 8px;
+}
+
+.toolbar-word-count {
+  align-items: center;
+  color: #475467;
+  display: flex;
+  flex-shrink: 0;
+  font-size: 13px;
+  height: 28px;
+  line-height: 28px;
+  padding: 0 8px;
+  white-space: nowrap;
 }
 
 .sticky-note-container {
