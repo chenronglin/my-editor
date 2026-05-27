@@ -209,10 +209,12 @@ function useOnChange(
 }
 
 function CommentInputBox({
+  authorName,
   editor,
   cancelAddComment,
   submitAddComment,
 }: {
+  authorName?: string;
   cancelAddComment: () => void;
   editor: LexicalEditor;
   submitAddComment: (
@@ -233,7 +235,8 @@ function CommentInputBox({
     [],
   );
   const selectionRef = useRef<RangeSelection | null>(null);
-  const author = useCollabAuthorName();
+  const collabAuthor = useCollabAuthorName();
+  const author = authorName ?? collabAuthor;
 
   const updateLocation = useCallback(() => {
     editor.getEditorState().read(() => {
@@ -373,10 +376,14 @@ function CommentInputBox({
 }
 
 function CommentsComposer({
+  authorName,
+  canReplyComment,
   submitAddComment,
   thread,
   placeholder,
 }: {
+  authorName?: string;
+  canReplyComment: boolean;
   placeholder?: string;
   submitAddComment: (
     commentOrThread: Comment,
@@ -389,7 +396,8 @@ function CommentsComposer({
   const [content, setContent] = useState('');
   const [canSubmit, setCanSubmit] = useState(false);
   const editorRef = useRef<LexicalEditor>(null);
-  const author = useCollabAuthorName();
+  const collabAuthor = useCollabAuthorName();
+  const author = authorName ?? collabAuthor;
 
   const onChange = useOnChange(setContent, setCanSubmit);
 
@@ -418,7 +426,7 @@ function CommentsComposer({
       <Button
         className="CommentPlugin_CommentsPanel_SendButton"
         onClick={submitComment}
-        disabled={!canSubmit}>
+        disabled={!canSubmit || !canReplyComment}>
         <i className="send" />
       </Button>
     </>
@@ -527,6 +535,8 @@ function CommentsPanelListComment({
 
 function CommentsPanelList({
   activeIDs,
+  authorName,
+  canReplyComment,
   comments,
   deleteCommentOrThread,
   listRef,
@@ -534,6 +544,8 @@ function CommentsPanelList({
   markNodeMap,
 }: {
   activeIDs: Array<string>;
+  authorName?: string;
+  canReplyComment: boolean;
   comments: Comments;
   deleteCommentOrThread: (
     commentOrThread: Comment | Thread,
@@ -646,11 +658,19 @@ function CommentsPanelList({
                 ))}
               </ul>
               <div className="CommentPlugin_CommentsPanel_List_Thread_Editor">
-                <CommentsComposer
-                  submitAddComment={submitAddComment}
-                  thread={commentOrThread}
-                  placeholder="回复批注..."
-                />
+                {canReplyComment ? (
+                  <CommentsComposer
+                    authorName={authorName}
+                    canReplyComment={canReplyComment}
+                    submitAddComment={submitAddComment}
+                    thread={commentOrThread}
+                    placeholder="回复批注..."
+                  />
+                ) : (
+                  <div className="CommentPlugin_CommentsPanel_ReadOnly">
+                    当前身份只能阅读批注
+                  </div>
+                )}
               </div>
             </li>
           );
@@ -670,12 +690,16 @@ function CommentsPanelList({
 
 function CommentsPanel({
   activeIDs,
+  authorName,
+  canReplyComment,
   deleteCommentOrThread,
   comments,
   submitAddComment,
   markNodeMap,
 }: {
   activeIDs: Array<string>;
+  authorName?: string;
+  canReplyComment: boolean;
   comments: Comments;
   deleteCommentOrThread: (
     commentOrThread: Comment | Thread,
@@ -699,6 +723,8 @@ function CommentsPanel({
       ) : (
         <CommentsPanelList
           activeIDs={activeIDs}
+          authorName={authorName}
+          canReplyComment={canReplyComment}
           comments={comments}
           deleteCommentOrThread={deleteCommentOrThread}
           listRef={listRef}
@@ -717,8 +743,14 @@ function useCollabAuthorName(): string {
 }
 
 export default function CommentPlugin({
+  authorName,
+  canCreateComment = true,
+  canReplyComment = true,
   providerFactory,
 }: {
+  authorName?: string;
+  canCreateComment?: boolean;
+  canReplyComment?: boolean;
   providerFactory?: (id: string, yjsDocMap: Map<string, Doc>) => Provider;
 }): JSX.Element {
   const collabContext = useCollaborationContext();
@@ -916,7 +948,7 @@ export default function CommentPlugin({
                 setActiveIDs(commentIDs);
                 hasActiveIds = true;
               }
-              if (!selection.isCollapsed()) {
+              if (canCreateComment && !selection.isCollapsed()) {
                 setActiveAnchorKey(anchorNode.getKey());
                 hasAnchorKey = true;
               }
@@ -948,7 +980,7 @@ export default function CommentPlugin({
         COMMAND_PRIORITY_EDITOR,
       ),
     );
-  }, [editor, markNodeMap]);
+  }, [canCreateComment, editor, markNodeMap]);
 
   const onAddComment = () => {
     editor.dispatchCommand(INSERT_INLINE_COMMAND, undefined);
@@ -959,6 +991,7 @@ export default function CommentPlugin({
       {showCommentInput &&
         createPortal(
           <CommentInputBox
+            authorName={authorName}
             editor={editor}
             cancelAddComment={cancelAddComment}
             submitAddComment={submitAddComment}
@@ -967,6 +1000,7 @@ export default function CommentPlugin({
         )}
       {activeAnchorKey !== null &&
         activeAnchorKey !== undefined &&
+        canCreateComment &&
         !showCommentInput &&
         createPortal(
           <AddCommentBox
@@ -990,6 +1024,8 @@ export default function CommentPlugin({
       {showComments &&
         createPortal(
           <CommentsPanel
+            authorName={authorName}
+            canReplyComment={canReplyComment}
             comments={comments}
             submitAddComment={submitAddComment}
             deleteCommentOrThread={deleteCommentOrThread}

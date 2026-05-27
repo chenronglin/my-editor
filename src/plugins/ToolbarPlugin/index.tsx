@@ -32,7 +32,6 @@ import {
 } from '../../context/ToolbarContext';
 import DropDown, {DropDownItem} from '../../ui/DropDown';
 import {isKeyboardInput} from '../../utils/focusUtils';
-import {TOGGLE_TRACK_CHANGES_COMMAND} from '../TrackChangesPlugin';
 import {formatHeading, formatParagraph} from './utils';
 
 type BasicBlockType = 'paragraph' | 'h1' | 'h2' | 'h3';
@@ -127,12 +126,18 @@ function $findTopLevelElement(node: LexicalNode) {
 export default function ToolbarPlugin({
   editor,
   activeEditor,
+  canToggleTrackChanges,
   setActiveEditor,
+  isReviewActive,
   isTrackChangesEnabled,
+  onToggleTrackChanges,
 }: {
   editor: LexicalEditor;
   activeEditor: LexicalEditor;
+  canToggleTrackChanges: boolean;
+  isReviewActive: boolean;
   isTrackChangesEnabled: boolean;
+  onToggleTrackChanges: () => void;
   setActiveEditor: Dispatch<LexicalEditor>;
 }): JSX.Element {
   const [isEditable, setIsEditable] = useState(() => editor.isEditable());
@@ -295,22 +300,27 @@ export default function ToolbarPlugin({
       </>
       <Divider />
       <button
-        disabled={!isEditable}
-        onClick={() => {
-          activeEditor.dispatchCommand(
-            TOGGLE_TRACK_CHANGES_COMMAND,
-            undefined,
-          );
-        }}
+        disabled={!canToggleTrackChanges}
+        onClick={onToggleTrackChanges}
         className={
           'toolbar-item spaced track-changes ' +
-          (isTrackChangesEnabled ? 'active' : '')
+          (isReviewActive ? 'active' : '')
         }
-        title="修订模式"
+        title={
+          !canToggleTrackChanges && isReviewActive
+            ? '编辑正在修订'
+            : isReviewActive
+              ? '结束修订模式'
+              : '开启修订模式'
+        }
         type="button"
-        aria-pressed={isTrackChangesEnabled}
+        aria-pressed={isReviewActive}
         aria-label="切换修订模式">
-        修订模式
+        {isReviewActive
+          ? isTrackChangesEnabled
+            ? '结束修订'
+            : '修订中'
+          : '开启修订'}
       </button>
     </div>
   );

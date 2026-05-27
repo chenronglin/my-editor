@@ -16,7 +16,6 @@ import type {JSX} from 'react';
 
 import './index.css';
 
-import {useCollaborationContext} from '@lexical/react/LexicalCollaborationContext';
 import {useLexicalComposerContext} from '@lexical/react/LexicalComposerContext';
 import {mergeRegister} from '@lexical/utils';
 import {
@@ -39,8 +38,7 @@ import {
   PASTE_COMMAND,
   REMOVE_TEXT_COMMAND,
 } from 'lexical';
-import {useCallback, useEffect, useRef, useState} from 'react';
-import {createPortal} from 'react-dom';
+import {useEffect} from 'react';
 
 import {
   $createSuggestionNode,
@@ -67,11 +65,6 @@ export const UPDATE_SUGGESTION_COMMENT_COMMAND: LexicalCommand<{
   comment: string;
   suggestionId: string;
 }> = createCommand('UPDATE_SUGGESTION_COMMENT_COMMAND');
-
-type SuggestionRecord = SuggestionData & {
-  keys: Set<NodeKey>;
-  text: string;
-};
 
 function createSuggestionId(): string {
   if (
@@ -417,152 +410,32 @@ function $updateSuggestionComment(suggestionId: string, comment: string): void {
   });
 }
 
-function $collectSuggestions(): Array<SuggestionRecord> {
-  const suggestions = new Map<string, SuggestionRecord>();
+function $getSuggestionType(suggestionId: string): SuggestionType | null {
+  let suggestionType: SuggestionType | null = null;
   $forEachSuggestionNode((node) => {
-    const data = node.getSuggestionData();
-    const existing = suggestions.get(data.suggestionId);
-    if (existing === undefined) {
-      suggestions.set(data.suggestionId, {
-        ...data,
-        keys: new Set([node.getKey()]),
-        text: node.getTextContent(),
-      });
-    } else {
-      existing.keys.add(node.getKey());
-      existing.text += node.getTextContent();
-      if (data.comment !== existing.comment) {
-        existing.comment = data.comment;
-      }
+    if (node.getSuggestionId() === suggestionId) {
+      suggestionType = node.getSuggestionType();
     }
   });
-  return Array.from(suggestions.values()).sort(
-    (a, b) => a.createdAt - b.createdAt,
-  );
-}
-
-function formatTime(createdAt: number): string {
-  return new Intl.DateTimeFormat('zh-CN', {
-    hour: '2-digit',
-    minute: '2-digit',
-    month: 'short',
-    day: 'numeric',
-  }).format(new Date(createdAt));
-}
-
-function SuggestionsPanel({
-  isEnabled,
-  suggestions,
-}: {
-  isEnabled: boolean;
-  suggestions: Array<SuggestionRecord>;
-}): JSX.Element {
-  const [editor] = useLexicalComposerContext();
-
-  return (
-    <div className="TrackChangesPlugin_Panel">
-      <div className="TrackChangesPlugin_Header">
-        <h2>修订记录</h2>
-        <span className="TrackChangesPlugin_Status">
-          {isEnabled ? '已开启' : '已关闭'}
-        </span>
-      </div>
-      {suggestions.length === 0 ? (
-        <div className="TrackChangesPlugin_Empty">暂无修订</div>
-      ) : (
-        <ul className="TrackChangesPlugin_List">
-          {suggestions.map((suggestion) => (
-            <li
-              className="TrackChangesPlugin_Item"
-              key={suggestion.suggestionId}>
-              <div className="TrackChangesPlugin_ItemHeader">
-                <span
-                  className={`TrackChangesPlugin_Type ${suggestion.suggestionType}`}>
-                  {suggestion.suggestionType === 'insertion' ? '新增' : '删除'}
-                </span>
-                <span className="TrackChangesPlugin_Meta">
-                  {suggestion.author} · {formatTime(suggestion.createdAt)}
-                </span>
-              </div>
-              <div className="TrackChangesPlugin_Quote">
-                {suggestion.text || '（空）'}
-              </div>
-              <textarea
-                className="TrackChangesPlugin_Comment"
-                value={suggestion.comment}
-                placeholder="添加备注..."
-                onChange={(event) => {
-                  editor.dispatchCommand(UPDATE_SUGGESTION_COMMENT_COMMAND, {
-                    comment: event.target.value,
-                    suggestionId: suggestion.suggestionId,
-                  });
-                }}
-              />
-              <div className="TrackChangesPlugin_Actions">
-                <button
-                  className="TrackChangesPlugin_Button"
-                  type="button"
-                  onClick={() => {
-                    editor.dispatchCommand(
-                      REJECT_SUGGESTION_COMMAND,
-                      suggestion.suggestionId,
-                    );
-                  }}>
-                  拒绝
-                </button>
-                <button
-                  className="TrackChangesPlugin_Button primary"
-                  type="button"
-                  onClick={() => {
-                    editor.dispatchCommand(
-                      ACCEPT_SUGGESTION_COMMAND,
-                      suggestion.suggestionId,
-                    );
-                  }}>
-                  接受
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
+  return suggestionType;
 }
 
 export default function TrackChangesPlugin({
+  authorName,
   isEnabled,
-  setIsEnabled,
 }: {
+  authorName: string;
   isEnabled: boolean;
-  setIsEnabled: (isEnabled: boolean) => void;
 }): JSX.Element | null {
   const [editor] = useLexicalComposerContext();
-  const {name, yjsDocMap} = useCollaborationContext();
-  const author = yjsDocMap.has('comments') ? name : '小说作者';
-  const [suggestions, setSuggestions] = useState<Array<SuggestionRecord>>([]);
-  const suggestionsRef = useRef<Array<SuggestionRecord>>([]);
-
-  const syncSuggestions = useCallback(
-    (nextSuggestions: Array<SuggestionRecord>) => {
-      suggestionsRef.current = nextSuggestions;
-      setSuggestions(nextSuggestions);
-    },
-    [],
-  );
+  const author = authorName;
 
   useEffect(() => {
     return mergeRegister(
-      editor.registerUpdateListener(({editorState}) => {
-        editorState.read(() => {
-          syncSuggestions($collectSuggestions());
-        });
-      }),
       editor.registerCommand(
         TOGGLE_TRACK_CHANGES_COMMAND,
         () => {
-          setIsEnabled(!isEnabled);
-          return true;
+          return false;
         },
         COMMAND_PRIORITY_EDITOR,
       ),
@@ -657,13 +530,11 @@ export default function TrackChangesPlugin({
       editor.registerCommand(
         ACCEPT_SUGGESTION_COMMAND,
         (suggestionId) => {
-          const suggestion = suggestionsRef.current.find(
-            (item) => item.suggestionId === suggestionId,
-          );
-          if (suggestion === undefined) {
+          const suggestionType = $getSuggestionType(suggestionId);
+          if (suggestionType === null) {
             return false;
           }
-          if (suggestion.suggestionType === 'insertion') {
+          if (suggestionType === 'insertion') {
             $unwrapSuggestion(suggestionId);
           } else {
             $removeSuggestion(suggestionId);
@@ -675,13 +546,11 @@ export default function TrackChangesPlugin({
       editor.registerCommand(
         REJECT_SUGGESTION_COMMAND,
         (suggestionId) => {
-          const suggestion = suggestionsRef.current.find(
-            (item) => item.suggestionId === suggestionId,
-          );
-          if (suggestion === undefined) {
+          const suggestionType = $getSuggestionType(suggestionId);
+          if (suggestionType === null) {
             return false;
           }
-          if (suggestion.suggestionType === 'insertion') {
+          if (suggestionType === 'insertion') {
             $removeSuggestion(suggestionId);
           } else {
             $unwrapSuggestion(suggestionId);
@@ -699,20 +568,7 @@ export default function TrackChangesPlugin({
         COMMAND_PRIORITY_EDITOR,
       ),
     );
-  }, [author, editor, isEnabled, setIsEnabled, syncSuggestions]);
+  }, [author, editor, isEnabled]);
 
-  useEffect(() => {
-    editor.getEditorState().read(() => {
-      syncSuggestions($collectSuggestions());
-    });
-  }, [editor, syncSuggestions]);
-
-  if (!isEnabled && suggestions.length === 0) {
-    return null;
-  }
-
-  return createPortal(
-    <SuggestionsPanel isEnabled={isEnabled} suggestions={suggestions} />,
-    document.body,
-  );
+  return null;
 }

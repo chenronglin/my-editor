@@ -227,6 +227,12 @@ i.comments {
   min-height: 20px;
 }
 
+.CommentPlugin_CommentsPanel_ReadOnly {
+  color: #777;
+  font-size: 13px;
+  padding: 8px 10px;
+}
+
 .CommentPlugin_CommentsPanel_Editor::before {
   content: '';
   width: 30px;

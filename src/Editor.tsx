@@ -25,6 +25,7 @@ import {OutputExtension} from 'lexical';
 import {useEffect, useState} from 'react';
 
 import {useSettings} from './context/SettingsContext';
+import {useMockWorkflow} from './context/MockWorkflowContext';
 import CommentPlugin from './plugins/CommentPlugin';
 import FloatingLinkEditorPlugin from './plugins/FloatingLinkEditorPlugin';
 import FloatingTextFormatToolbarPlugin from './plugins/FloatingTextFormatToolbarPlugin';
@@ -51,6 +52,40 @@ const DEFAULT_LINK_ATTRIBUTES: LinkAttributes = {
   target: '_blank',
 };
 
+function WorkflowStatusBar(): JSX.Element {
+  const {currentUser, permissions, reviewSession} = useMockWorkflow();
+
+  if (reviewSession !== null && currentUser.role === 'author') {
+    return (
+      <div className="workflow-status warning">
+        编辑正在修订，正文暂不可编辑；你仍然可以阅读修订并回复批注。
+      </div>
+    );
+  }
+
+  if (reviewSession !== null) {
+    return (
+      <div className="workflow-status active">
+        修订模式已开启。新增和删除会写入文档结构，不再生成独立修订记录区。
+      </div>
+    );
+  }
+
+  if (!permissions.canEditContent && currentUser.role === 'editor') {
+    return (
+      <div className="workflow-status">
+        点击工具栏“开启修订”后，编辑可修改正文，作者端会自动只读。
+      </div>
+    );
+  }
+
+  return (
+    <div className="workflow-status">
+      当前为作者草稿编辑状态；编辑开启修订后会锁定正文。
+    </div>
+  );
+}
+
 export default function Editor(): JSX.Element {
   const {
     settings: {
@@ -67,8 +102,16 @@ export default function Editor(): JSX.Element {
   const [editor] = useLexicalComposerContext();
   const [activeEditor, setActiveEditor] = useState(editor);
   const [isLinkEditMode, setIsLinkEditMode] = useState<boolean>(false);
-  const [isTrackChangesEnabled, setIsTrackChangesEnabled] =
-    useState<boolean>(false);
+  const {
+    currentUser,
+    permissions,
+    reviewSession,
+    startReview,
+    stopReview,
+  } = useMockWorkflow();
+  const isReviewActive = reviewSession !== null;
+  const isTrackChangesEnabled =
+    isReviewActive && currentUser.role === 'editor' && permissions.canEditContent;
 
   const onRef = (_floatingAnchorElem: HTMLDivElement) => {
     if (_floatingAnchorElem !== null) {
@@ -83,6 +126,10 @@ export default function Editor(): JSX.Element {
   );
   useSyncExtensionSignal(ListExtension, 'hasStrictIndent', listStrictIndent);
   useSyncExtensionSignal(ClickableLinkExtension, 'disabled', isEditable);
+
+  useEffect(() => {
+    editor.setEditable(permissions.canEditContent);
+  }, [editor, permissions.canEditContent]);
 
   useEffect(() => {
     const updateViewPortWidth = () => {
@@ -108,12 +155,28 @@ export default function Editor(): JSX.Element {
         activeEditor={activeEditor}
         setActiveEditor={setActiveEditor}
         isTrackChangesEnabled={isTrackChangesEnabled}
+        isReviewActive={isReviewActive}
+        canToggleTrackChanges={
+          permissions.canStartReview || permissions.canStopReview
+        }
+        onToggleTrackChanges={() => {
+          if (permissions.canStopReview) {
+            stopReview();
+          } else {
+            startReview();
+          }
+        }}
       />
+      <WorkflowStatusBar />
       <div className="editor-container">
-        <CommentPlugin />
+        <CommentPlugin
+          authorName={currentUser.name}
+          canCreateComment={permissions.canCreateComment}
+          canReplyComment={permissions.canReplyComment}
+        />
         <TrackChangesPlugin
           isEnabled={isTrackChangesEnabled}
-          setIsEnabled={setIsTrackChangesEnabled}
+          authorName={currentUser.name}
         />
         <div className="editor-scroller">
           <div className="editor" ref={onRef}>
