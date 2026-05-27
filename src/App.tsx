@@ -122,18 +122,18 @@ function WorkflowHeader(): JSX.Element {
         </span>
       </div>
       <div className="workflow-controls" aria-label="显示模式">
-        <span className="workflow-controls-label">显示</span>
+        <span className="workflow-controls-label">显示模式：</span>
         <button
           className={displayMode === 'review' ? 'active' : ''}
           onClick={() => setDisplayMode('review')}
           type="button">
-          审阅
+          工作模式
         </button>
         <button
           className={displayMode === 'final' ? 'active' : ''}
           onClick={() => setDisplayMode('final')}
           type="button">
-          最终
+          阅读模式
         </button>
       </div>
     </header>
@@ -141,17 +141,32 @@ function WorkflowHeader(): JSX.Element {
 }
 
 function App(): JSX.Element {
+  const initialEditorState = useMemo(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const savedState = localStorage.getItem('playground-editor-state');
+      if (savedState) {
+        try {
+          JSON.parse(savedState);
+          return savedState;
+        } catch (e) {
+          console.error('Failed to parse saved state from localStorage:', e);
+        }
+      }
+    }
+    return $prepopulatedRichText;
+  }, []);
+
   const app = useMemo(
     () =>
       defineExtension({
-        $initialEditorState: $prepopulatedRichText,
+        $initialEditorState: initialEditorState,
         dependencies: [
           AppExtension,
           PlaygroundRichTextExtension,
         ],
         name: '@lexical/playground/dynamic-config',
       }),
-    [],
+    [initialEditorState],
   );
 
   return (

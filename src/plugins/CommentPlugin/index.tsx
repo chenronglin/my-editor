@@ -211,7 +211,7 @@ function CommentInputBox({
           const {left, bottom, width} = range.getBoundingClientRect();
           const selectionRects = createRectsFromDOMRange(editor, range);
           let correctedLeft =
-            selectionRects.length === 1 ? left + width / 2 - 125 : left - 125;
+            selectionRects.length === 1 ? left + width / 2 - 225 : left - 225;
           if (correctedLeft < 10) {
             correctedLeft = 10;
           }

@@ -76,7 +76,7 @@ function WorkflowStatusBar(): JSX.Element {
   if (reviewSession !== null) {
     return (
       <div className="workflow-status active">
-        修订模式已开启。新增和删除会写入文档结构，不再生成独立修订记录区。
+        修订模式已开启。作者无法修改文档。修改完成后，请关闭修订模式。
       </div>
     );
   }
@@ -144,6 +144,15 @@ export default function Editor(): JSX.Element {
   useEffect(() => {
     editor.setEditable(permissions.canEditContent);
   }, [editor, permissions.canEditContent]);
+
+  useEffect(() => {
+    return editor.registerUpdateListener(({editorState}) => {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const stringifiedJSON = JSON.stringify(editorState.toJSON());
+        localStorage.setItem('playground-editor-state', stringifiedJSON);
+      }
+    });
+  }, [editor]);
 
   useEffect(() => {
     const updateViewPortWidth = () => {

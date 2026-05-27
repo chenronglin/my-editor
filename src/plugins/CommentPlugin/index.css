@@ -19,7 +19,7 @@ i.add-comment {
 .CommentPlugin_CommentInputBox {
   display: block;
   position: absolute;
-  width: 250px;
+  width: 450px;
   min-height: 80px;
   background-color: #fff;
   box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.1);
@@ -105,7 +105,7 @@ i.add-comment {
   caret-color: rgb(5, 5, 5);
   display: block;
   padding: 9px 10px 10px 9px;
-  min-height: 80px;
+  min-height: 180px;
 }
 
 .CommentPlugin_CommentInputBox_Editor:focus {

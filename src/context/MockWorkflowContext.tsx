@@ -89,9 +89,9 @@ function getPermissions(
     reviewSession !== null && reviewSession.ownerUserId === currentUser.id;
 
   return {
-    canCreateComment: !isFinalMode && isEditor,
+    canCreateComment: true,
     canEditContent: !isFinalMode && (isEditor ? ownsReview : !isReviewActive),
-    canReplyComment: !isFinalMode,
+    canReplyComment: true,
     canStartReview: !isFinalMode && isEditor && !isReviewActive,
     canStopReview: !isFinalMode && isEditor && ownsReview,
   };
