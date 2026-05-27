@@ -142,6 +142,84 @@ function $getSuggestionAncestor(
   return null;
 }
 
+function getOwnInsertionDataFromNode(
+  node: LexicalNode | null | undefined,
+  author: string,
+): SuggestionData | null {
+  const suggestionNode = $isSuggestionNode(node)
+    ? node
+    : $getSuggestionAncestor(node);
+  if (
+    suggestionNode !== null &&
+    suggestionNode.getSuggestionType() === 'insertion' &&
+    suggestionNode.getAuthor() === author
+  ) {
+    return suggestionNode.getSuggestionData();
+  }
+  return null;
+}
+
+function $getAdjacentOwnInsertionData(
+  selection: RangeSelection,
+  author: string,
+): SuggestionData | null {
+  if (!selection.isCollapsed()) {
+    return null;
+  }
+  const anchor = selection.anchor;
+  if (anchor.type === 'text') {
+    const anchorNode = anchor.getNode();
+    if (!$isTextNode(anchorNode)) {
+      return null;
+    }
+    const textSize = anchorNode.getTextContentSize();
+    if (anchor.offset === 0) {
+      return getOwnInsertionDataFromNode(
+        anchorNode.getPreviousSibling(),
+        author,
+      );
+    }
+    if (anchor.offset === textSize) {
+      return getOwnInsertionDataFromNode(anchorNode.getNextSibling(), author);
+    }
+    return null;
+  }
+  const elementNode = anchor.getNode();
+  if (!$isElementNode(elementNode)) {
+    return null;
+  }
+  const previousNode =
+    anchor.offset > 0 ? elementNode.getChildAtIndex(anchor.offset - 1) : null;
+  return (
+    getOwnInsertionDataFromNode(previousNode, author) ||
+    getOwnInsertionDataFromNode(
+      elementNode.getChildAtIndex(anchor.offset),
+      author,
+    )
+  );
+}
+
+function $getAdjacentOwnInsertionDataForTextRange(
+  node: LexicalNode,
+  startOffset: number,
+  endOffset: number,
+  author: string,
+): SuggestionData | null {
+  if (!$isTextNode(node)) {
+    return null;
+  }
+  if (startOffset === 0) {
+    const data = getOwnInsertionDataFromNode(node.getPreviousSibling(), author);
+    if (data !== null) {
+      return data;
+    }
+  }
+  if (endOffset === node.getTextContentSize()) {
+    return getOwnInsertionDataFromNode(node.getNextSibling(), author);
+  }
+  return null;
+}
+
 function $isCollapsedInsideOwnInsertion(
   selection: RangeSelection,
   author: string,
@@ -228,7 +306,8 @@ function $insertSuggestionText(text: string, author: string): boolean {
   }
 
   const suggestionNode = $createSuggestionNode(
-    createSuggestionData('insertion', author),
+    $getAdjacentOwnInsertionData(nextSelection, author) ||
+      createSuggestionData('insertion', author),
   );
   appendTextToSuggestionNode(suggestionNode, text);
   nextSelection.insertNodes([suggestionNode]);
@@ -238,7 +317,11 @@ function $insertSuggestionText(text: string, author: string): boolean {
 
 function $wrapCommittedCompositionText(text: string, author: string): void {
   const selection = $getSelection();
-  if (!$isRangeSelection(selection) || !selection.isCollapsed() || text === '') {
+  if (
+    !$isRangeSelection(selection) ||
+    !selection.isCollapsed() ||
+    text === ''
+  ) {
     return;
   }
   const anchor = selection.anchor;
@@ -271,7 +354,12 @@ function $wrapCommittedCompositionText(text: string, author: string): void {
   $wrapSelectionInSuggestionNode(
     suggestionSelection,
     false,
-    createSuggestionData('insertion', author),
+    $getAdjacentOwnInsertionDataForTextRange(
+      anchorNode,
+      startOffset,
+      endOffset,
+      author,
+    ) || createSuggestionData('insertion', author),
   );
 }
 
@@ -354,7 +442,7 @@ function $collectSuggestions(): Array<SuggestionRecord> {
 }
 
 function formatTime(createdAt: number): string {
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat('zh-CN', {
     hour: '2-digit',
     minute: '2-digit',
     month: 'short',
@@ -375,38 +463,34 @@ function SuggestionsPanel({
     <div className="TrackChangesPlugin_Panel">
       <div className="TrackChangesPlugin_Header">
         <h2>修订记录</h2>
-        {/* <span className="TrackChangesPlugin_Status">
-          {isEnabled ? 'On' : 'Off'}
-        </span> */}
+        <span className="TrackChangesPlugin_Status">
+          {isEnabled ? '已开启' : '已关闭'}
+        </span>
       </div>
       {suggestions.length === 0 ? (
-        <div className="TrackChangesPlugin_Empty">暂无记录</div>
+        <div className="TrackChangesPlugin_Empty">暂无修订</div>
       ) : (
         <ul className="TrackChangesPlugin_List">
           {suggestions.map((suggestion) => (
             <li
               className="TrackChangesPlugin_Item"
-              key={suggestion.suggestionId}
-            >
+              key={suggestion.suggestionId}>
               <div className="TrackChangesPlugin_ItemHeader">
                 <span
-                  className={`TrackChangesPlugin_Type ${suggestion.suggestionType}`}
-                >
-                  {suggestion.suggestionType === 'insertion'
-                    ? 'Insertion'
-                    : 'Deletion'}
+                  className={`TrackChangesPlugin_Type ${suggestion.suggestionType}`}>
+                  {suggestion.suggestionType === 'insertion' ? '新增' : '删除'}
                 </span>
                 <span className="TrackChangesPlugin_Meta">
                   {suggestion.author} · {formatTime(suggestion.createdAt)}
                 </span>
               </div>
               <div className="TrackChangesPlugin_Quote">
-                {suggestion.text || '(empty)'}
+                {suggestion.text || '（空）'}
               </div>
               <textarea
                 className="TrackChangesPlugin_Comment"
                 value={suggestion.comment}
-                placeholder="Add a comment..."
+                placeholder="添加备注..."
                 onChange={(event) => {
                   editor.dispatchCommand(UPDATE_SUGGESTION_COMMENT_COMMAND, {
                     comment: event.target.value,
@@ -423,9 +507,8 @@ function SuggestionsPanel({
                       REJECT_SUGGESTION_COMMAND,
                       suggestion.suggestionId,
                     );
-                  }}
-                >
-                  Reject
+                  }}>
+                  拒绝
                 </button>
                 <button
                   className="TrackChangesPlugin_Button primary"
@@ -435,9 +518,8 @@ function SuggestionsPanel({
                       ACCEPT_SUGGESTION_COMMAND,
                       suggestion.suggestionId,
                     );
-                  }}
-                >
-                  Accept
+                  }}>
+                  接受
                 </button>
               </div>
             </li>
@@ -457,7 +539,7 @@ export default function TrackChangesPlugin({
 }): JSX.Element | null {
   const [editor] = useLexicalComposerContext();
   const {name, yjsDocMap} = useCollaborationContext();
-  const author = yjsDocMap.has('comments') ? name : 'Playground User';
+  const author = yjsDocMap.has('comments') ? name : '小说作者';
   const [suggestions, setSuggestions] = useState<Array<SuggestionRecord>>([]);
   const suggestionsRef = useRef<Array<SuggestionRecord>>([]);
 

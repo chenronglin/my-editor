@@ -89,7 +89,7 @@ function cloneThread(thread: Thread): Thread {
 function markDeleted(comment: Comment): Comment {
   return {
     author: comment.author,
-    content: '[Deleted Comment]',
+    content: '[已删除的批注]',
     deleted: true,
     id: comment.id,
     timeStamp: comment.timeStamp,

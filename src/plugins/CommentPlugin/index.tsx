@@ -155,7 +155,7 @@ function PlainTextEditor({
   onEscape,
   onChange,
   editorRef,
-  placeholder = 'Type a comment...',
+  placeholder = '输入批注...',
 }: {
   autoFocus?: boolean;
   className?: string;
@@ -359,13 +359,13 @@ function CommentInputBox({
         <Button
           onClick={cancelAddComment}
           className="CommentPlugin_CommentInputBox_Button">
-          Cancel
+          取消
         </Button>
         <Button
           onClick={submitComment}
           disabled={!canSubmit}
           className="CommentPlugin_CommentInputBox_Button primary">
-          Comment
+          批注
         </Button>
       </div>
     </div>
@@ -443,20 +443,21 @@ function ShowDeleteCommentOrThreadDialog({
 }): JSX.Element {
   return (
     <>
-      Are you sure you want to delete this {commentOrThread.type}?
+      确定要删除这条
+      {commentOrThread.type === 'thread' ? '批注串' : '批注'}吗？
       <div className="Modal__content">
         <Button
           onClick={() => {
             deleteCommentOrThread(commentOrThread, thread);
             onClose();
           }}>
-          Delete
+          删除
         </Button>{' '}
         <Button
           onClick={() => {
             onClose();
           }}>
-          Cancel
+          取消
         </Button>
       </div>
     </>
@@ -492,7 +493,7 @@ function CommentsPanelListComment({
           {comment.author}
         </span>
         <span className="CommentPlugin_CommentsPanel_List_Comment_Time">
-          · {seconds > -10 ? 'Just now' : rtf.format(minutes, 'minute')}
+          · {seconds > -10 ? '刚刚' : rtf.format(minutes, 'minute')}
         </span>
       </div>
       <p
@@ -505,7 +506,7 @@ function CommentsPanelListComment({
         <>
           <Button
             onClick={() => {
-              showModal('Delete Comment', onClose => (
+              showModal('删除批注', onClose => (
                 <ShowDeleteCommentOrThreadDialog
                   commentOrThread={comment}
                   deleteCommentOrThread={deleteComment}
@@ -551,7 +552,7 @@ function CommentsPanelList({
   const [modal, showModal] = useModal();
   const rtf = useMemo(
     () =>
-      new Intl.RelativeTimeFormat('en', {
+      new Intl.RelativeTimeFormat('zh-CN', {
         localeMatcher: 'best fit',
         numeric: 'auto',
         style: 'short',
@@ -620,7 +621,7 @@ function CommentsPanelList({
                 {/* INTRODUCE DELETE THREAD HERE*/}
                 <Button
                   onClick={() => {
-                    showModal('Delete Thread', onClose => (
+                    showModal('删除批注串', onClose => (
                       <ShowDeleteCommentOrThreadDialog
                         commentOrThread={commentOrThread}
                         deleteCommentOrThread={deleteCommentOrThread}
@@ -648,7 +649,7 @@ function CommentsPanelList({
                 <CommentsComposer
                   submitAddComment={submitAddComment}
                   thread={commentOrThread}
-                  placeholder="Reply to comment..."
+                  placeholder="回复批注..."
                 />
               </div>
             </li>
@@ -692,9 +693,9 @@ function CommentsPanel({
 
   return (
     <div className="CommentPlugin_CommentsPanel">
-      <h2 className="CommentPlugin_CommentsPanel_Heading">评论区</h2>
+      <h2 className="CommentPlugin_CommentsPanel_Heading">批注区</h2>
       {isEmpty ? (
-        <div className="CommentPlugin_CommentsPanel_Empty">暂无评论</div>
+        <div className="CommentPlugin_CommentsPanel_Empty">暂无批注</div>
       ) : (
         <CommentsPanelList
           activeIDs={activeIDs}
@@ -712,7 +713,7 @@ function CommentsPanel({
 function useCollabAuthorName(): string {
   const collabContext = useCollaborationContext();
   const {yjsDocMap, name} = collabContext;
-  return yjsDocMap.has('comments') ? name : 'Playground User';
+  return yjsDocMap.has('comments') ? name : '小说作者';
 }
 
 export default function CommentPlugin({
@@ -981,7 +982,7 @@ export default function CommentPlugin({
             showComments ? 'active' : ''
           }`}
           onClick={() => setShowComments(!showComments)}
-          title={showComments ? 'Hide Comments' : 'Show Comments'}>
+          title={showComments ? '隐藏批注' : '显示批注'}>
           <i className="comments" />
         </Button>,
         document.body,
