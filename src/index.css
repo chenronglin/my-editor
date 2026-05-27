@@ -34,16 +34,13 @@ header {
   justify-content: center;
 }
 
-header a {
-  max-width: 220px;
+header .site-title {
+  color: #111;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
   margin: 20px 0 0 0;
-  display: block;
-}
-
-header img {
-  display: block;
-  height: 100%;
-  width: 100%;
+  white-space: nowrap;
 }
 
 header h1 {
@@ -1562,6 +1559,14 @@ button.toolbar-item.active {
 
 button.toolbar-item.active i {
   opacity: 1;
+}
+
+button.toolbar-item.track-changes {
+  color: #333;
+  font-size: 13px;
+  font-weight: 600;
+  gap: 6px;
+  min-width: max-content;
 }
 
 .toolbar-item:hover:not([disabled]) {

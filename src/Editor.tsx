@@ -29,6 +29,7 @@ import CommentPlugin from './plugins/CommentPlugin';
 import FloatingLinkEditorPlugin from './plugins/FloatingLinkEditorPlugin';
 import FloatingTextFormatToolbarPlugin from './plugins/FloatingTextFormatToolbarPlugin';
 import ToolbarPlugin from './plugins/ToolbarPlugin';
+import TrackChangesPlugin from './plugins/TrackChangesPlugin';
 import ContentEditable from './ui/ContentEditable';
 
 export function useSyncExtensionSignal<
@@ -58,7 +59,7 @@ export default function Editor(): JSX.Element {
     },
   } = useSettings();
   const isEditable = useLexicalEditable();
-  const placeholder = 'Enter some rich text...';
+  const placeholder = '请输入正文...';
   const [floatingAnchorElem, setFloatingAnchorElem] =
     useState<HTMLDivElement | null>(null);
   const [isSmallWidthViewport, setIsSmallWidthViewport] =
@@ -66,6 +67,8 @@ export default function Editor(): JSX.Element {
   const [editor] = useLexicalComposerContext();
   const [activeEditor, setActiveEditor] = useState(editor);
   const [isLinkEditMode, setIsLinkEditMode] = useState<boolean>(false);
+  const [isTrackChangesEnabled, setIsTrackChangesEnabled] =
+    useState<boolean>(false);
 
   const onRef = (_floatingAnchorElem: HTMLDivElement) => {
     if (_floatingAnchorElem !== null) {
@@ -104,9 +107,14 @@ export default function Editor(): JSX.Element {
         editor={editor}
         activeEditor={activeEditor}
         setActiveEditor={setActiveEditor}
+        isTrackChangesEnabled={isTrackChangesEnabled}
       />
       <div className="editor-container">
         <CommentPlugin />
+        <TrackChangesPlugin
+          isEnabled={isTrackChangesEnabled}
+          setIsEnabled={setIsTrackChangesEnabled}
+        />
         <div className="editor-scroller">
           <div className="editor" ref={onRef}>
             <ContentEditable placeholder={placeholder} />

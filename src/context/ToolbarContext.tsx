@@ -25,23 +25,23 @@ export const DEFAULT_FONT_SIZE = 16;
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const rootTypeToRootName = {
-  root: 'Root',
-  table: 'Table',
+  root: '正文',
+  table: '表格',
 };
 
 export const blockTypeToBlockName = {
-  bullet: 'Bulleted List',
-  check: 'Check List',
-  code: 'Code Block',
-  h1: 'Heading 1',
-  h2: 'Heading 2',
-  h3: 'Heading 3',
-  h4: 'Heading 4',
-  h5: 'Heading 5',
-  h6: 'Heading 6',
-  number: 'Numbered List',
-  paragraph: 'Normal',
-  quote: 'Quote',
+  bullet: '项目列表',
+  check: '待办列表',
+  code: '代码块',
+  h1: '一级标题',
+  h2: '二级标题',
+  h3: '三级标题',
+  h4: '四级标题',
+  h5: '五级标题',
+  h6: '六级标题',
+  number: '编号列表',
+  paragraph: '正文',
+  quote: '引用',
 };
 
 //disable eslint sorting rule for quick reference to toolbar state

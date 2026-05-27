@@ -597,6 +597,18 @@
   background: rgba(255, 212, 0, 0.7);
   border-bottom: 2px solid rgba(255, 212, 0, 0.7);
 }
+.ck-suggestion-marker-insert {
+  background: rgba(42, 178, 93, 0.16);
+  border-bottom: 2px solid rgba(31, 143, 73, 0.75);
+  padding-bottom: 2px;
+}
+.ck-suggestion-marker-delete {
+  background: rgba(224, 48, 48, 0.12);
+  color: #9f1f1f;
+  text-decoration: line-through;
+  text-decoration-color: #d92d20;
+  text-decoration-thickness: 2px;
+}
 .PlaygroundEditorTheme__embedBlock {
   user-select: none;
 }

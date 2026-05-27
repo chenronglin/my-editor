@@ -39,7 +39,6 @@ import {FlashMessageContext} from './context/FlashMessageContext';
 import {SettingsContext} from './context/SettingsContext';
 import {ToolbarContext} from './context/ToolbarContext';
 import Editor from './Editor';
-import logo from './images/logo.svg';
 import PlaygroundNodes from './nodes/PlaygroundNodes';
 import PlaygroundEditorTheme from './themes/PlaygroundEditorTheme';
 import {validateUrl} from './utils/url';
@@ -49,7 +48,9 @@ function $prepopulatedRichText() {
   if (root.getFirstChild() === null) {
     const paragraph = $createParagraphNode();
     paragraph.append(
-      $createTextNode('这是一个精简版的 Lexical 编辑器。您可以在这里输入文本并测试划词评论（Comments）功能。'),
+      $createTextNode(
+        '这是一个精简版小说编辑器。您可以在这里输入文本，并测试划词批注与修订模式。',
+      ),
     );
     root.append(paragraph);
   }
@@ -104,9 +105,7 @@ function App(): JSX.Element {
       <LexicalExtensionComposer extension={app} contentEditable={null}>
         <ToolbarContext>
           <header>
-            <a href="https://lexical.dev" target="_blank" rel="noreferrer">
-              <img src={logo} alt="Lexical Logo" />
-            </a>
+            <div className="site-title">小说编辑器</div>
           </header>
           <div className="editor-shell">
             <Editor />

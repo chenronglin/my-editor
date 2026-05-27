@@ -32,6 +32,7 @@ import {
 } from '../../context/ToolbarContext';
 import DropDown, {DropDownItem} from '../../ui/DropDown';
 import {isKeyboardInput} from '../../utils/focusUtils';
+import {TOGGLE_TRACK_CHANGES_COMMAND} from '../TrackChangesPlugin';
 import {formatHeading, formatParagraph} from './utils';
 
 type BasicBlockType = 'paragraph' | 'h1' | 'h2' | 'h3';
@@ -64,8 +65,8 @@ function BlockFormatDropDown({
       disabled={disabled}
       buttonClassName="toolbar-item block-controls"
       buttonIconClassName={'icon block-type ' + blockType}
-      buttonLabel={blockTypeToBlockName[blockType] || 'Normal'}
-      buttonAriaLabel="Formatting options for text style">
+      buttonLabel={blockTypeToBlockName[blockType] || '正文'}
+      buttonAriaLabel="选择段落格式">
       <DropDownItem
         className={
           'item wide ' + dropDownActiveClass(blockType === 'paragraph')
@@ -73,7 +74,7 @@ function BlockFormatDropDown({
         onClick={() => formatParagraph(editor)}>
         <div className="icon-text-container">
           <i className="icon paragraph" />
-          <span className="text">Normal</span>
+          <span className="text">正文</span>
         </div>
       </DropDownItem>
       <DropDownItem
@@ -81,7 +82,7 @@ function BlockFormatDropDown({
         onClick={() => formatHeading(editor, blockType, 'h1')}>
         <div className="icon-text-container">
           <i className="icon h1" />
-          <span className="text">Heading 1</span>
+          <span className="text">一级标题</span>
         </div>
       </DropDownItem>
       <DropDownItem
@@ -89,7 +90,7 @@ function BlockFormatDropDown({
         onClick={() => formatHeading(editor, blockType, 'h2')}>
         <div className="icon-text-container">
           <i className="icon h2" />
-          <span className="text">Heading 2</span>
+          <span className="text">二级标题</span>
         </div>
       </DropDownItem>
       <DropDownItem
@@ -97,7 +98,7 @@ function BlockFormatDropDown({
         onClick={() => formatHeading(editor, blockType, 'h3')}>
         <div className="icon-text-container">
           <i className="icon h3" />
-          <span className="text">Heading 3</span>
+          <span className="text">三级标题</span>
         </div>
       </DropDownItem>
     </DropDown>
@@ -127,9 +128,11 @@ export default function ToolbarPlugin({
   editor,
   activeEditor,
   setActiveEditor,
+  isTrackChangesEnabled,
 }: {
   editor: LexicalEditor;
   activeEditor: LexicalEditor;
+  isTrackChangesEnabled: boolean;
   setActiveEditor: Dispatch<LexicalEditor>;
 }): JSX.Element {
   const [isEditable, setIsEditable] = useState(() => editor.isEditable());
@@ -243,9 +246,9 @@ export default function ToolbarPlugin({
           className={
             'toolbar-item spaced ' + (toolbarState.isBold ? 'active' : '')
           }
-          title="Bold (Cmd+B)"
+          title="加粗（Cmd+B）"
           type="button"
-          aria-label="Format text as bold">
+          aria-label="加粗">
           <i className="format bold" />
         </button>
         <button
@@ -256,9 +259,9 @@ export default function ToolbarPlugin({
           className={
             'toolbar-item spaced ' + (toolbarState.isItalic ? 'active' : '')
           }
-          title="Italic (Cmd+I)"
+          title="斜体（Cmd+I）"
           type="button"
-          aria-label="Format text as italics">
+          aria-label="斜体">
           <i className="format italic" />
         </button>
         <button
@@ -270,9 +273,9 @@ export default function ToolbarPlugin({
             'toolbar-item spaced ' +
             (toolbarState.isUnderline ? 'active' : '')
           }
-          title="Underline (Cmd+U)"
+          title="下划线（Cmd+U）"
           type="button"
-          aria-label="Format text to underlined">
+          aria-label="下划线">
           <i className="format underline" />
         </button>
         <button
@@ -284,12 +287,31 @@ export default function ToolbarPlugin({
             'toolbar-item spaced ' +
             (toolbarState.isStrikethrough ? 'active' : '')
           }
-          title="Strikethrough"
+          title="删除线"
           type="button"
-          aria-label="Format text with a strikethrough">
+          aria-label="删除线">
           <i className="format strikethrough" />
         </button>
       </>
+      <Divider />
+      <button
+        disabled={!isEditable}
+        onClick={() => {
+          activeEditor.dispatchCommand(
+            TOGGLE_TRACK_CHANGES_COMMAND,
+            undefined,
+          );
+        }}
+        className={
+          'toolbar-item spaced track-changes ' +
+          (isTrackChangesEnabled ? 'active' : '')
+        }
+        title="修订模式"
+        type="button"
+        aria-pressed={isTrackChangesEnabled}
+        aria-label="切换修订模式">
+        修订模式
+      </button>
     </div>
   );
 }

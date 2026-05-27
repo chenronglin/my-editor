@@ -1,0 +1,126 @@
+.TrackChangesPlugin_Panel {
+  position: fixed;
+  right: 0;
+  top: 88px;
+  z-index: 24;
+  width: 320px;
+  height: calc(100% - 88px);
+  background: #fff;
+  border-top-left-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.12);
+  overflow: auto;
+}
+
+.TrackChangesPlugin_Header {
+  align-items: center;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  height: 44px;
+  justify-content: space-between;
+  padding: 0 14px;
+}
+
+.TrackChangesPlugin_Header h2 {
+  color: #333;
+  font-size: 18px;
+  margin: 0;
+}
+
+.TrackChangesPlugin_Status {
+  color: #666;
+  font-size: 12px;
+}
+
+.TrackChangesPlugin_Empty {
+  color: #777;
+  padding: 16px;
+}
+
+.TrackChangesPlugin_List {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.TrackChangesPlugin_Item {
+  border-bottom: 1px solid #eee;
+  padding: 12px 14px;
+}
+
+.TrackChangesPlugin_ItemHeader {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.TrackChangesPlugin_Type {
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 6px;
+}
+
+.TrackChangesPlugin_Type.insertion {
+  background: #def7e8;
+  color: #13733a;
+}
+
+.TrackChangesPlugin_Type.deletion {
+  background: #ffe4e4;
+  color: #b42318;
+}
+
+.TrackChangesPlugin_Meta {
+  color: #777;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.TrackChangesPlugin_Quote {
+  background: #f7f7f7;
+  border-radius: 6px;
+  color: #333;
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 10px 0;
+  max-height: 72px;
+  overflow: auto;
+  padding: 8px;
+}
+
+.TrackChangesPlugin_Comment {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 13px;
+  min-height: 54px;
+  padding: 8px;
+  resize: vertical;
+  width: 100%;
+}
+
+.TrackChangesPlugin_Actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.TrackChangesPlugin_Button {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 5px 10px;
+}
+
+.TrackChangesPlugin_Button.primary {
+  background: #111;
+  border-color: #111;
+  color: #fff;
+}
