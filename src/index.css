@@ -107,6 +107,12 @@ header .site-title {
   color: #7a4d00;
 }
 
+.workflow-status.final {
+  background: #eef4ff;
+  border-color: #c7d7fe;
+  color: #263f85;
+}
+
 @media (max-width: 760px) {
   header {
     align-items: flex-start;
@@ -143,6 +149,16 @@ header h1 {
   display: block;
   border-bottom-left-radius: 10px;
   border-bottom-right-radius: 10px;
+}
+
+.editor-shell .editor-container.final-view .ck-suggestion-marker-delete {
+  display: none;
+}
+
+.editor-shell .editor-container.final-view .ck-suggestion-marker-insert {
+  background: transparent;
+  border-bottom: 0;
+  padding-bottom: 0;
 }
 
 .editor-shell .editor-container.tree-view {

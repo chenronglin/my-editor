@@ -29,6 +29,7 @@ import {useMockWorkflow} from './context/MockWorkflowContext';
 import CommentPlugin from './plugins/CommentPlugin';
 import FloatingLinkEditorPlugin from './plugins/FloatingLinkEditorPlugin';
 import FloatingTextFormatToolbarPlugin from './plugins/FloatingTextFormatToolbarPlugin';
+import PasteAsBlocksPlugin from './plugins/PasteAsBlocksPlugin';
 import ToolbarPlugin from './plugins/ToolbarPlugin';
 import TrackChangesPlugin from './plugins/TrackChangesPlugin';
 import ContentEditable from './ui/ContentEditable';
@@ -53,7 +54,16 @@ const DEFAULT_LINK_ATTRIBUTES: LinkAttributes = {
 };
 
 function WorkflowStatusBar(): JSX.Element {
-  const {currentUser, permissions, reviewSession} = useMockWorkflow();
+  const {currentUser, displayMode, permissions, reviewSession} =
+    useMockWorkflow();
+
+  if (displayMode === 'final') {
+    return (
+      <div className="workflow-status final">
+        最终模式：删除修订已隐藏，新增修订按正文显示；当前视图只读。
+      </div>
+    );
+  }
 
   if (reviewSession !== null && currentUser.role === 'author') {
     return (
@@ -104,6 +114,7 @@ export default function Editor(): JSX.Element {
   const [isLinkEditMode, setIsLinkEditMode] = useState<boolean>(false);
   const {
     currentUser,
+    displayMode,
     permissions,
     reviewSession,
     startReview,
@@ -111,7 +122,10 @@ export default function Editor(): JSX.Element {
   } = useMockWorkflow();
   const isReviewActive = reviewSession !== null;
   const isTrackChangesEnabled =
-    isReviewActive && currentUser.role === 'editor' && permissions.canEditContent;
+    displayMode === 'review' &&
+    isReviewActive &&
+    currentUser.role === 'editor' &&
+    permissions.canEditContent;
 
   const onRef = (_floatingAnchorElem: HTMLDivElement) => {
     if (_floatingAnchorElem !== null) {
@@ -168,7 +182,10 @@ export default function Editor(): JSX.Element {
         }}
       />
       <WorkflowStatusBar />
-      <div className="editor-container">
+      <div
+        className={`editor-container ${
+          displayMode === 'final' ? 'final-view' : ''
+        }`}>
         <CommentPlugin
           authorName={currentUser.name}
           canCreateComment={permissions.canCreateComment}
@@ -177,6 +194,9 @@ export default function Editor(): JSX.Element {
         <TrackChangesPlugin
           isEnabled={isTrackChangesEnabled}
           authorName={currentUser.name}
+        />
+        <PasteAsBlocksPlugin
+          disabled={!permissions.canEditContent || isTrackChangesEnabled}
         />
         <div className="editor-scroller">
           <div className="editor" ref={onRef}>

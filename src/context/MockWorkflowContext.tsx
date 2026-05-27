@@ -3,6 +3,7 @@ import type {JSX, ReactNode} from 'react';
 import {createContext, useContext, useMemo, useState} from 'react';
 
 export type MockRole = 'editor' | 'author';
+export type MockDisplayMode = 'review' | 'final';
 
 type MockUser = {
   id: string;
@@ -33,8 +34,10 @@ type MockPermissions = {
 type MockWorkflow = {
   chapterStatus: 'DRAFT' | 'IN_REVIEW' | 'REVISION_READY';
   currentUser: MockUser;
+  displayMode: MockDisplayMode;
   permissions: MockPermissions;
   reviewSession: MockReviewSession | null;
+  setDisplayMode: (mode: MockDisplayMode) => void;
   setRole: (role: MockRole) => void;
   startReview: () => void;
   stopReview: () => void;
@@ -76,19 +79,21 @@ function createReviewSession(owner: MockUser, version: number): MockReviewSessio
 
 function getPermissions(
   currentUser: MockUser,
+  displayMode: MockDisplayMode,
   reviewSession: MockReviewSession | null,
 ): MockPermissions {
   const isEditor = currentUser.role === 'editor';
   const isReviewActive = reviewSession !== null;
+  const isFinalMode = displayMode === 'final';
   const ownsReview =
     reviewSession !== null && reviewSession.ownerUserId === currentUser.id;
 
   return {
-    canCreateComment: isEditor,
-    canEditContent: isEditor ? ownsReview : !isReviewActive,
-    canReplyComment: true,
-    canStartReview: isEditor && !isReviewActive,
-    canStopReview: isEditor && ownsReview,
+    canCreateComment: !isFinalMode && isEditor,
+    canEditContent: !isFinalMode && (isEditor ? ownsReview : !isReviewActive),
+    canReplyComment: !isFinalMode,
+    canStartReview: !isFinalMode && isEditor && !isReviewActive,
+    canStopReview: !isFinalMode && isEditor && ownsReview,
   };
 }
 
@@ -98,19 +103,22 @@ export function MockWorkflowProvider({
   children: ReactNode;
 }): JSX.Element {
   const [role, setRole] = useState<MockRole>('editor');
+  const [displayMode, setDisplayMode] = useState<MockDisplayMode>('review');
   const [reviewSession, setReviewSession] =
     useState<MockReviewSession | null>(null);
   const [version, setVersion] = useState(17);
   const currentUser = USERS[role];
 
   const value = useMemo<MockWorkflow>(() => {
-    const permissions = getPermissions(currentUser, reviewSession);
+    const permissions = getPermissions(currentUser, displayMode, reviewSession);
 
     return {
       chapterStatus: reviewSession === null ? 'REVISION_READY' : 'IN_REVIEW',
       currentUser,
+      displayMode,
       permissions,
       reviewSession,
+      setDisplayMode,
       setRole,
       startReview: () => {
         if (!permissions.canStartReview) {
@@ -128,7 +136,7 @@ export function MockWorkflowProvider({
       users: USERS,
       version,
     };
-  }, [currentUser, reviewSession, version]);
+  }, [currentUser, displayMode, reviewSession, version]);
 
   return (
     <MockWorkflowContext.Provider value={value}>

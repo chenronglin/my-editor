@@ -20,6 +20,7 @@ import {
   LexicalCommand,
   LexicalEditor,
   LexicalNode,
+  NodeKey,
   SELECTION_CHANGE_COMMAND,
   SKIP_DOM_SELECTION_TAG,
   TextFormatType,
@@ -51,10 +52,12 @@ function dropDownActiveClass(active: boolean) {
 }
 
 function BlockFormatDropDown({
+  blockKey,
   editor,
   blockType,
   disabled = false,
 }: {
+  blockKey?: NodeKey;
   blockType: BasicBlockType;
   editor: LexicalEditor;
   disabled?: boolean;
@@ -70,7 +73,7 @@ function BlockFormatDropDown({
         className={
           'item wide ' + dropDownActiveClass(blockType === 'paragraph')
         }
-        onClick={() => formatParagraph(editor)}>
+        onClick={() => formatParagraph(editor, blockKey)}>
         <div className="icon-text-container">
           <i className="icon paragraph" />
           <span className="text">正文</span>
@@ -78,7 +81,7 @@ function BlockFormatDropDown({
       </DropDownItem>
       <DropDownItem
         className={'item wide ' + dropDownActiveClass(blockType === 'h1')}
-        onClick={() => formatHeading(editor, blockType, 'h1')}>
+        onClick={() => formatHeading(editor, blockType, 'h1', blockKey)}>
         <div className="icon-text-container">
           <i className="icon h1" />
           <span className="text">一级标题</span>
@@ -86,7 +89,7 @@ function BlockFormatDropDown({
       </DropDownItem>
       <DropDownItem
         className={'item wide ' + dropDownActiveClass(blockType === 'h2')}
-        onClick={() => formatHeading(editor, blockType, 'h2')}>
+        onClick={() => formatHeading(editor, blockType, 'h2', blockKey)}>
         <div className="icon-text-container">
           <i className="icon h2" />
           <span className="text">二级标题</span>
@@ -94,7 +97,7 @@ function BlockFormatDropDown({
       </DropDownItem>
       <DropDownItem
         className={'item wide ' + dropDownActiveClass(blockType === 'h3')}
-        onClick={() => formatHeading(editor, blockType, 'h3')}>
+        onClick={() => formatHeading(editor, blockType, 'h3', blockKey)}>
         <div className="icon-text-container">
           <i className="icon h3" />
           <span className="text">三级标题</span>
@@ -141,6 +144,7 @@ export default function ToolbarPlugin({
   setActiveEditor: Dispatch<LexicalEditor>;
 }): JSX.Element {
   const [isEditable, setIsEditable] = useState(() => editor.isEditable());
+  const [selectedBlockKey, setSelectedBlockKey] = useState<NodeKey>();
   const {toolbarState, updateToolbarState} = useToolbarState();
 
   const dispatchToolbarCommand = <T extends LexicalCommand<unknown>>(
@@ -178,6 +182,7 @@ export default function ToolbarPlugin({
       const anchorNode = selection.anchor.getNode();
       const element = $findTopLevelElement(anchorNode);
 
+      setSelectedBlockKey(element.getKey());
       $handleHeadingNode(element);
     }
     if ($isRangeSelection(selection)) {
@@ -237,6 +242,7 @@ export default function ToolbarPlugin({
       {activeEditor === editor && (
         <>
           <BlockFormatDropDown
+            blockKey={selectedBlockKey}
             disabled={!isEditable}
             blockType={getBasicBlockType(toolbarState.blockType)}
             editor={activeEditor}

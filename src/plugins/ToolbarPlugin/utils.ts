@@ -29,6 +29,7 @@ import {
   $addUpdateTag,
   $createParagraphNode,
   $createRangeSelection,
+  $getNodeByKey,
   $getSelection,
   $isBlockElementNode,
   $isLineBreakNode,
@@ -39,6 +40,7 @@ import {
   ElementNode,
   LexicalEditor,
   LexicalNode,
+  NodeKey,
   RangeSelection,
   SKIP_DOM_SELECTION_TAG,
   SKIP_SELECTION_FOCUS_TAG,
@@ -178,9 +180,30 @@ export const updateFontSize = (
   }
 };
 
-export const formatParagraph = (editor: LexicalEditor) => {
+function $setSingleBlockType(
+  targetBlockKey: NodeKey | undefined,
+  createElement: () => ElementNode,
+): boolean {
+  if (targetBlockKey === undefined) {
+    return false;
+  }
+  const node = $getNodeByKey(targetBlockKey);
+  if (!$isBlockElementNode(node)) {
+    return false;
+  }
+  node.replace(createElement(), true);
+  return true;
+}
+
+export const formatParagraph = (
+  editor: LexicalEditor,
+  targetBlockKey?: NodeKey,
+) => {
   editor.update(() => {
     $addUpdateTag(SKIP_SELECTION_FOCUS_TAG);
+    if ($setSingleBlockType(targetBlockKey, () => $createParagraphNode())) {
+      return;
+    }
     const selection = $getSelection();
     $setBlocksType(selection, () => $createParagraphNode());
   });
@@ -190,10 +213,18 @@ export const formatHeading = (
   editor: LexicalEditor,
   blockType: string,
   headingSize: HeadingTagType,
+  targetBlockKey?: NodeKey,
 ) => {
   if (blockType !== headingSize) {
     editor.update(() => {
       $addUpdateTag(SKIP_SELECTION_FOCUS_TAG);
+      if (
+        $setSingleBlockType(targetBlockKey, () =>
+          $createHeadingNode(headingSize),
+        )
+      ) {
+        return;
+      }
       const selection = $getSelection();
       $setBlocksType(selection, () => $createHeadingNode(headingSize));
     });

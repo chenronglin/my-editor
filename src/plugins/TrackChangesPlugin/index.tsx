@@ -20,6 +20,7 @@ import {useLexicalComposerContext} from '@lexical/react/LexicalComposerContext';
 import {mergeRegister} from '@lexical/utils';
 import {
   $createLineBreakNode,
+  $createParagraphNode,
   $createTextNode,
   $getNodeByKey,
   $getRoot,
@@ -262,6 +263,10 @@ function appendTextToSuggestionNode(
   });
 }
 
+function getPastedLines(text: string): Array<string> {
+  return text.replace(/\r\n?/g, '\n').split('\n');
+}
+
 function $deleteSelectionAsSuggestion(
   selection: RangeSelection,
   author: string,
@@ -305,6 +310,38 @@ function $insertSuggestionText(text: string, author: string): boolean {
   appendTextToSuggestionNode(suggestionNode, text);
   nextSelection.insertNodes([suggestionNode]);
   suggestionNode.selectEnd();
+  return true;
+}
+
+function $insertSuggestionTextAsBlocks(text: string, author: string): boolean {
+  const lines = getPastedLines(text);
+  if (lines.length <= 1) {
+    return $insertSuggestionText(text, author);
+  }
+  const selection = $getSelection();
+  if (!$isRangeSelection(selection)) {
+    return false;
+  }
+  if (!selection.isCollapsed()) {
+    $deleteSelectionAsSuggestion(selection, author);
+  }
+  const nextSelection = $getSelection();
+  if (!$isRangeSelection(nextSelection)) {
+    return false;
+  }
+  const paragraphs = lines.map(line => {
+    const paragraph = $createParagraphNode();
+    if (line !== '') {
+      const suggestionNode = $createSuggestionNode(
+        createSuggestionData('insertion', author),
+      );
+      appendTextToSuggestionNode(suggestionNode, line);
+      paragraph.append(suggestionNode);
+    }
+    return paragraph;
+  });
+  nextSelection.insertNodes(paragraphs);
+  paragraphs[paragraphs.length - 1]?.selectEnd();
   return true;
 }
 
@@ -496,7 +533,7 @@ export default function TrackChangesPlugin({
             return false;
           }
           event.preventDefault();
-          return $insertSuggestionText(text, author);
+          return $insertSuggestionTextAsBlocks(text, author);
         },
         COMMAND_PRIORITY_CRITICAL,
       ),

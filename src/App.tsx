@@ -91,7 +91,14 @@ const AppExtension = defineExtension({
 });
 
 function WorkflowHeader(): JSX.Element {
-  const {currentUser, reviewSession, setRole, users} = useMockWorkflow();
+  const {
+    currentUser,
+    displayMode,
+    reviewSession,
+    setDisplayMode,
+    setRole,
+    users,
+  } = useMockWorkflow();
 
   return (
     <header className="app-header">
@@ -113,6 +120,21 @@ function WorkflowHeader(): JSX.Element {
         <span className="workflow-review-pill">
           {reviewSession === null ? '未修订' : '编辑修订中'}
         </span>
+      </div>
+      <div className="workflow-controls" aria-label="显示模式">
+        <span className="workflow-controls-label">显示</span>
+        <button
+          className={displayMode === 'review' ? 'active' : ''}
+          onClick={() => setDisplayMode('review')}
+          type="button">
+          审阅
+        </button>
+        <button
+          className={displayMode === 'final' ? 'active' : ''}
+          onClick={() => setDisplayMode('final')}
+          type="button">
+          最终
+        </button>
       </div>
     </header>
   );
