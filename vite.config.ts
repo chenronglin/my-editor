@@ -14,12 +14,35 @@ import viteCopyExcalidrawAssets from './viteCopyExcalidrawAssets';
 
 // https://vitejs.dev/config/
 export default defineConfig(({mode}) => ({
+  base: './',
   build: {
     outDir: 'build',
     rollupOptions: {
       input: {
         main: new URL('./index.html', import.meta.url).pathname,
         split: new URL('./split/index.html', import.meta.url).pathname,
+      },
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('excalidraw')) {
+              return 'excalidraw';
+            }
+            if (id.includes('katex')) {
+              return 'katex';
+            }
+            if (id.includes('react') || id.includes('scheduler')) {
+              return 'react';
+            }
+            if (id.includes('lexical')) {
+              return 'lexical';
+            }
+            if (id.includes('yjs') || id.includes('y-websocket')) {
+              return 'yjs';
+            }
+            return 'vendor';
+          }
+        },
       },
     },
     target: 'es2022',
