@@ -146,6 +146,11 @@ function App(): JSX.Element {
       const savedState = localStorage.getItem('playground-editor-state');
       if (savedState) {
         try {
+          // 清理包含已废弃的 suggestion 节点的旧状态
+          if (savedState.includes('"type":"suggestion"') || savedState.includes('"type": "suggestion"')) {
+            localStorage.removeItem('playground-editor-state');
+            return $prepopulatedRichText;
+          }
           JSON.parse(savedState);
           return savedState;
         } catch (e) {

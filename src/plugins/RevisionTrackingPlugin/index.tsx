@@ -40,28 +40,10 @@ import {
   type RevisionNode,
   type RevisionType,
 } from '../../nodes/RevisionNode';
-import {
-  $isSuggestionNode,
-  SuggestionNode,
-} from '../../nodes/SuggestionNode';
-
 type RevisionTrackingUser = {
   id: string;
   name: string;
 };
-
-function $getSuggestionAncestor(
-  node: LexicalNode | null | undefined,
-): SuggestionNode | null {
-  let current = node;
-  while (current !== null && current !== undefined) {
-    if ($isSuggestionNode(current)) {
-      return current;
-    }
-    current = current.getParent();
-  }
-  return null;
-}
 
 function $getRevisionAncestor(
   node: LexicalNode | null | undefined,
@@ -341,11 +323,6 @@ function $wrapTextNodeInRevision(
     return;
   }
 
-  const suggestionNode = $getSuggestionAncestor(textNode);
-  if (suggestionNode !== null) {
-    return;
-  }
-
   const revisionType: RevisionType = 'insert';
   let targetNode: TextNode | null = textNode;
 
@@ -398,11 +375,9 @@ function $wrapTextNodeInRevision(
 export default function RevisionTrackingPlugin({
   currentUser,
   isEnabled,
-  isSuggestionEnabled,
 }: {
   currentUser: RevisionTrackingUser;
   isEnabled: boolean;
-  isSuggestionEnabled: boolean;
 }): JSX.Element | null {
   const [editor] = useLexicalComposerContext();
 
@@ -433,60 +408,57 @@ export default function RevisionTrackingPlugin({
       },
     );
 
-    const shouldTrackDelete = isEnabled && !isSuggestionEnabled;
-    const unregisterCommands = shouldTrackDelete
-      ? mergeRegister(
-          editor.registerCommand(
-            DELETE_CHARACTER_COMMAND,
-            (isBackward) => {
-              const selection = $getSelection();
-              if (!$isRangeSelection(selection)) {
-                return false;
-              }
-              const deletionSelection = selection.clone();
-              if (deletionSelection.isCollapsed()) {
-                deletionSelection.modify('extend', isBackward, 'character');
-              }
-              return $deleteSelectionAsRevision(deletionSelection, currentUser);
-            },
-            COMMAND_PRIORITY_CRITICAL,
-          ),
-          editor.registerCommand(
-            DELETE_WORD_COMMAND,
-            (isBackward) => {
-              const selection = $getSelection();
-              if (!$isRangeSelection(selection)) {
-                return false;
-              }
-              const deletionSelection = selection.clone();
-              if (deletionSelection.isCollapsed()) {
-                deletionSelection.modify('extend', isBackward, 'word');
-              }
-              return $deleteSelectionAsRevision(deletionSelection, currentUser);
-            },
-            COMMAND_PRIORITY_CRITICAL,
-          ),
-          editor.registerCommand(
-            REMOVE_TEXT_COMMAND,
-            () => {
-              const selection = $getSelection();
-              return (
-                $isRangeSelection(selection) &&
-                !selection.isCollapsed() &&
-                $deleteSelectionAsRevision(selection, currentUser)
-              );
-            },
-            COMMAND_PRIORITY_CRITICAL,
-          ),
-        )
-      : () => {};
+    const unregisterCommands = mergeRegister(
+      editor.registerCommand(
+        DELETE_CHARACTER_COMMAND,
+        (isBackward) => {
+          const selection = $getSelection();
+          if (!$isRangeSelection(selection)) {
+            return false;
+          }
+          const deletionSelection = selection.clone();
+          if (deletionSelection.isCollapsed()) {
+            deletionSelection.modify('extend', isBackward, 'character');
+          }
+          return $deleteSelectionAsRevision(deletionSelection, currentUser);
+        },
+        COMMAND_PRIORITY_CRITICAL,
+      ),
+      editor.registerCommand(
+        DELETE_WORD_COMMAND,
+        (isBackward) => {
+          const selection = $getSelection();
+          if (!$isRangeSelection(selection)) {
+            return false;
+          }
+          const deletionSelection = selection.clone();
+          if (deletionSelection.isCollapsed()) {
+            deletionSelection.modify('extend', isBackward, 'word');
+          }
+          return $deleteSelectionAsRevision(deletionSelection, currentUser);
+        },
+        COMMAND_PRIORITY_CRITICAL,
+      ),
+      editor.registerCommand(
+        REMOVE_TEXT_COMMAND,
+        () => {
+          const selection = $getSelection();
+          return (
+            $isRangeSelection(selection) &&
+            !selection.isCollapsed() &&
+            $deleteSelectionAsRevision(selection, currentUser)
+          );
+        },
+        COMMAND_PRIORITY_CRITICAL,
+      ),
+    );
 
     return () => {
       unregisterMutation();
       unregisterTransform();
       unregisterCommands();
     };
-  }, [currentUser, editor, isEnabled, isSuggestionEnabled]);
+  }, [currentUser, editor, isEnabled]);
 
   return null;
 }

@@ -78,6 +78,18 @@ function getRevisionContentElement(element: HTMLElement): HTMLElement {
   );
 }
 
+function formatRevisionTimestamp(timestamp: number): string {
+  if (!timestamp) {
+    return '';
+  }
+  const date = new Date(timestamp);
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  const hh = String(date.getHours()).padStart(2, '0');
+  const mm = String(date.getMinutes()).padStart(2, '0');
+  return `${m}-${d} ${hh}:${mm}`;
+}
+
 function createRevisionElement(
   data: RevisionData,
   includeAuthorTag: boolean,
@@ -90,7 +102,8 @@ function createRevisionElement(
     tag.className = 'lexical-revision__author-tag';
     tag.setAttribute(REVISION_AUTHOR_TAG_ATTR, 'true');
     tag.setAttribute('contenteditable', 'false');
-    tag.textContent = `[${data.authorName}]`;
+    const timeStr = formatRevisionTimestamp(data.timestamp);
+    tag.textContent = `[${data.authorName} ${timeStr}]`;
     element.appendChild(tag);
   }
 
@@ -201,7 +214,8 @@ export class RevisionNode extends ElementNode {
         `[${REVISION_AUTHOR_TAG_ATTR}="true"]`,
       );
       if (tag !== null) {
-        tag.textContent = `[${data.authorName}]`;
+        const timeStr = formatRevisionTimestamp(data.timestamp);
+        tag.textContent = `[${data.authorName} ${timeStr}]`;
       }
     }
     return false;

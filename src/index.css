@@ -152,15 +152,7 @@ header h1 {
   border-bottom-right-radius: 10px;
 }
 
-.editor-shell .editor-container.final-view .ck-suggestion-marker-delete {
-  display: none;
-}
 
-.editor-shell .editor-container.final-view .ck-suggestion-marker-insert {
-  background: transparent;
-  border-bottom: 0;
-  padding-bottom: 0;
-}
 
 .editor-shell .editor-container.tree-view {
   border-radius: 0;

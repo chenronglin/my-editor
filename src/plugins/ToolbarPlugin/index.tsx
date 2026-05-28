@@ -34,7 +34,9 @@ import {
   blockTypeToBlockName,
   useToolbarState,
 } from '../../context/ToolbarContext';
-import {$isSuggestionNode} from '../../nodes/SuggestionNode';
+import {useMockWorkflow} from '../../context/MockWorkflowContext';
+import {$isRevisionNode} from '../../nodes/RevisionNode';
+import {$createEditorProposalNode} from '../../nodes/EditorProposalNode';
 import DropDown, {DropDownItem} from '../../ui/DropDown';
 import {isKeyboardInput} from '../../utils/focusUtils';
 import {formatHeading, formatParagraph} from './utils';
@@ -131,7 +133,7 @@ function $findTopLevelElement(node: LexicalNode) {
 }
 
 function getVisibleFinalText(node: LexicalNode): string {
-  if ($isSuggestionNode(node) && node.getSuggestionType() === 'deletion') {
+  if ($isRevisionNode(node) && node.getRevisionType() === 'delete') {
     return '';
   }
 
@@ -160,14 +162,12 @@ export default function ToolbarPlugin({
   canToggleTrackChanges,
   setActiveEditor,
   isReviewActive,
-  isTrackChangesEnabled,
   onToggleTrackChanges,
 }: {
   editor: LexicalEditor;
   activeEditor: LexicalEditor;
   canToggleTrackChanges: boolean;
   isReviewActive: boolean;
-  isTrackChangesEnabled: boolean;
   onToggleTrackChanges: () => void;
   setActiveEditor: Dispatch<LexicalEditor>;
 }): JSX.Element {
@@ -175,6 +175,21 @@ export default function ToolbarPlugin({
   const [finalCharacterCount, setFinalCharacterCount] = useState(0);
   const [selectedBlockKey, setSelectedBlockKey] = useState<NodeKey>();
   const {toolbarState, updateToolbarState} = useToolbarState();
+  const {currentUser, displayMode} = useMockWorkflow();
+
+  const handleAddProposal = () => {
+    activeEditor.update(() => {
+      const selection = $getSelection();
+      if ($isRangeSelection(selection)) {
+        const anchorNode = selection.anchor.getNode();
+        const element = $findTopLevelElement(anchorNode);
+        if (element !== null) {
+          const proposalNode = $createEditorProposalNode('请在此输入编辑建议...');
+          element.insertAfter(proposalNode);
+        }
+      }
+    });
+  };
 
   const dispatchToolbarCommand = <T extends LexicalCommand<unknown>>(
     command: T,
@@ -363,12 +378,23 @@ export default function ToolbarPlugin({
         type="button"
         aria-pressed={isReviewActive}
         aria-label="切换修订模式">
-        {isReviewActive
-          ? isTrackChangesEnabled
-            ? '结束修订'
-            : '修订中'
-          : '开启修订'}
+        {isReviewActive ? '结束修订' : '开启修订'}
       </button>
+      {currentUser.role === 'editor' && displayMode === 'review' && (
+        <>
+          <Divider />
+          <button
+            disabled={!isEditable}
+            onClick={handleAddProposal}
+            className="toolbar-item spaced add-proposal"
+            title="添加编辑建议"
+            type="button"
+            aria-label="添加编辑建议">
+            <span style={{marginRight: '4px'}}>📝</span>
+            添加建议
+          </button>
+        </>
+      )}
       <div className="toolbar-spacer" />
       <div
         className="toolbar-word-count"

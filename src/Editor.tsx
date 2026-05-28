@@ -32,7 +32,6 @@ import FloatingTextFormatToolbarPlugin from './plugins/FloatingTextFormatToolbar
 import PasteAsBlocksPlugin from './plugins/PasteAsBlocksPlugin';
 import RevisionTrackingPlugin from './plugins/RevisionTrackingPlugin';
 import ToolbarPlugin from './plugins/ToolbarPlugin';
-import TrackChangesPlugin from './plugins/TrackChangesPlugin';
 import ContentEditable from './ui/ContentEditable';
 
 export function useSyncExtensionSignal<
@@ -122,11 +121,6 @@ export default function Editor(): JSX.Element {
     stopReview,
   } = useMockWorkflow();
   const isReviewActive = reviewSession !== null;
-  const isTrackChangesEnabled =
-    displayMode === 'review' &&
-    isReviewActive &&
-    currentUser.role === 'editor' &&
-    permissions.canEditContent;
 
   const onRef = (_floatingAnchorElem: HTMLDivElement) => {
     if (_floatingAnchorElem !== null) {
@@ -178,7 +172,6 @@ export default function Editor(): JSX.Element {
         editor={editor}
         activeEditor={activeEditor}
         setActiveEditor={setActiveEditor}
-        isTrackChangesEnabled={isTrackChangesEnabled}
         isReviewActive={isReviewActive}
         canToggleTrackChanges={
           permissions.canStartReview || permissions.canStopReview
@@ -201,20 +194,15 @@ export default function Editor(): JSX.Element {
           canCreateComment={permissions.canCreateComment}
           canReplyComment={permissions.canReplyComment}
         />
-        <TrackChangesPlugin
-          isEnabled={isTrackChangesEnabled}
-          authorName={currentUser.name}
-        />
         <RevisionTrackingPlugin
           isEnabled={displayMode === 'review' && permissions.canEditContent}
-          isSuggestionEnabled={isTrackChangesEnabled}
           currentUser={{
             id: currentUser.id,
             name: currentUser.name,
           }}
         />
         <PasteAsBlocksPlugin
-          disabled={!permissions.canEditContent || isTrackChangesEnabled}
+          disabled={!permissions.canEditContent}
         />
         <div className="editor-scroller">
           <div className="editor" ref={onRef}>

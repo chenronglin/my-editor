@@ -36,9 +36,9 @@ import {PollNode} from './PollNode';
 import {RevisionNode} from './RevisionNode';
 import {SpecialTextNode} from './SpecialTextNode';
 import {StickyNode} from './StickyNode';
-import {SuggestionNode} from './SuggestionNode';
 import {TweetNode} from './TweetNode';
 import {YouTubeNode} from './YouTubeNode';
+import {EditorProposalNode} from './EditorProposalNode';
 
 const PlaygroundNodes: Array<Klass<LexicalNode>> = [
   HeadingNode,
@@ -76,7 +76,7 @@ const PlaygroundNodes: Array<Klass<LexicalNode>> = [
   SpecialTextNode,
   DateTimeNode,
   RevisionNode,
-  SuggestionNode,
+  EditorProposalNode,
 ];
 
 export default PlaygroundNodes;
