@@ -30,6 +30,7 @@ import CommentPlugin from './plugins/CommentPlugin';
 import FloatingLinkEditorPlugin from './plugins/FloatingLinkEditorPlugin';
 import FloatingTextFormatToolbarPlugin from './plugins/FloatingTextFormatToolbarPlugin';
 import PasteAsBlocksPlugin from './plugins/PasteAsBlocksPlugin';
+import RevisionTrackingPlugin from './plugins/RevisionTrackingPlugin';
 import ToolbarPlugin from './plugins/ToolbarPlugin';
 import TrackChangesPlugin from './plugins/TrackChangesPlugin';
 import ContentEditable from './ui/ContentEditable';
@@ -203,6 +204,14 @@ export default function Editor(): JSX.Element {
         <TrackChangesPlugin
           isEnabled={isTrackChangesEnabled}
           authorName={currentUser.name}
+        />
+        <RevisionTrackingPlugin
+          isEnabled={displayMode === 'review' && permissions.canEditContent}
+          isSuggestionEnabled={isTrackChangesEnabled}
+          currentUser={{
+            id: currentUser.id,
+            name: currentUser.name,
+          }}
         />
         <PasteAsBlocksPlugin
           disabled={!permissions.canEditContent || isTrackChangesEnabled}

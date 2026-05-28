@@ -1,0 +1,49 @@
+.lexical-revision {
+  display: inline;
+}
+
+.lexical-revision__author-tag {
+  background: rgba(25, 118, 210, 0.1);
+  border: 1px solid rgba(25, 118, 210, 0.18);
+  border-radius: 3px;
+  color: #1565c0;
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.35;
+  margin-right: 4px;
+  padding: 0 4px;
+  pointer-events: none;
+  user-select: none;
+  vertical-align: 0.08em;
+}
+
+.lexical-revision__content {
+  border-bottom: 1px dashed rgba(25, 118, 210, 0.75);
+}
+
+.lexical-revision--delete .lexical-revision__author-tag {
+  background: rgba(217, 45, 32, 0.1);
+  border-color: rgba(217, 45, 32, 0.18);
+  color: #b42318;
+}
+
+.lexical-revision--delete .lexical-revision__content {
+  border-bottom-color: rgba(217, 45, 32, 0.75);
+}
+
+.ContentEditable__root[contenteditable='false'] .lexical-revision__author-tag,
+.is-read-only .lexical-revision__author-tag {
+  display: none !important;
+}
+
+.ContentEditable__root[contenteditable='false'] .lexical-revision__content,
+.is-read-only .lexical-revision__content {
+  border-bottom: 0;
+}
+
+/* Hide deleted revisions in read-only / view-final modes */
+.ContentEditable__root[contenteditable='false'] .lexical-revision--delete,
+.is-read-only .lexical-revision--delete {
+  display: none !important;
+}
