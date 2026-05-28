@@ -18,26 +18,7 @@ import {OverflowNode} from '@lexical/overflow';
 import {HeadingNode, QuoteNode} from '@lexical/rich-text';
 import {TableCellNode, TableNode, TableRowNode} from '@lexical/table';
 
-import {CollapsibleContainerNode} from '../plugins/CollapsibleExtension/CollapsibleContainerNode';
-import {CollapsibleContentNode} from '../plugins/CollapsibleExtension/CollapsibleContentNode';
-import {CollapsibleTitleNode} from '../plugins/CollapsibleExtension/CollapsibleTitleNode';
-import {DateTimeNode} from './DateTimeNode/DateTimeNode';
-import {EmojiNode} from './EmojiNode';
-import {EquationNode} from './EquationNode';
-import {ExcalidrawNode} from './ExcalidrawNode';
-import {FigmaNode} from './FigmaNode';
-import {ImageNode} from './ImageNode';
-import {KeywordNode} from './KeywordNode';
-import {LayoutContainerNode} from './LayoutContainerNode';
-import {LayoutItemNode} from './LayoutItemNode';
-import {MentionNode} from './MentionNode';
-import {PageBreakNode} from './PageBreakNode';
-import {PollNode} from './PollNode';
 import {RevisionNode} from './RevisionNode';
-import {SpecialTextNode} from './SpecialTextNode';
-import {StickyNode} from './StickyNode';
-import {TweetNode} from './TweetNode';
-import {YouTubeNode} from './YouTubeNode';
 import {EditorProposalNode} from './EditorProposalNode';
 
 const PlaygroundNodes: Array<Klass<LexicalNode>> = [
@@ -54,27 +35,8 @@ const PlaygroundNodes: Array<Klass<LexicalNode>> = [
   AutoLinkNode,
   LinkNode,
   OverflowNode,
-  PollNode,
-  StickyNode,
-  ImageNode,
-  MentionNode,
-  EmojiNode,
-  ExcalidrawNode,
-  EquationNode,
-  KeywordNode,
   HorizontalRuleNode,
-  TweetNode,
-  YouTubeNode,
-  FigmaNode,
   MarkNode,
-  CollapsibleContainerNode,
-  CollapsibleContentNode,
-  CollapsibleTitleNode,
-  PageBreakNode,
-  LayoutContainerNode,
-  LayoutItemNode,
-  SpecialTextNode,
-  DateTimeNode,
   RevisionNode,
   EditorProposalNode,
 ];

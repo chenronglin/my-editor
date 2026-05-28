@@ -29,10 +29,12 @@ import {
   TextFormatType,
 } from 'lexical';
 import {Dispatch, useCallback, useEffect, useState} from 'react';
+import {$getSelectionStyleValueForProperty, $patchStyleText} from '@lexical/selection';
 
 import {
   blockTypeToBlockName,
   useToolbarState,
+  DEFAULT_FONT_SIZE,
 } from '../../context/ToolbarContext';
 import {useMockWorkflow} from '../../context/MockWorkflowContext';
 import {$isRevisionNode} from '../../nodes/RevisionNode';
@@ -40,6 +42,7 @@ import {$createEditorProposalNode} from '../../nodes/EditorProposalNode';
 import DropDown, {DropDownItem} from '../../ui/DropDown';
 import {isKeyboardInput} from '../../utils/focusUtils';
 import {formatHeading, formatParagraph} from './utils';
+import DropdownColorPicker from '../../ui/DropdownColorPicker';
 
 type BasicBlockType = 'paragraph' | 'h1' | 'h2' | 'h3';
 
@@ -184,7 +187,7 @@ export default function ToolbarPlugin({
         const anchorNode = selection.anchor.getNode();
         const element = $findTopLevelElement(anchorNode);
         if (element !== null) {
-          const proposalNode = $createEditorProposalNode('请在此输入编辑建议...');
+          const proposalNode = $createEditorProposalNode('');
           element.insertAfter(proposalNode);
         }
       }
@@ -238,11 +241,27 @@ export default function ToolbarPlugin({
         'isStrikethrough',
         selection.hasFormat('strikethrough'),
       );
+      updateToolbarState(
+        'fontColor',
+        $getSelectionStyleValueForProperty(selection, 'color', '#000'),
+      );
     }
   }, [
     updateToolbarState,
     $handleHeadingNode,
   ]);
+
+  const onFontColorSelect = useCallback(
+    (value: string) => {
+      activeEditor.update(() => {
+        const selection = $getSelection();
+        if ($isRangeSelection(selection)) {
+          $patchStyleText(selection, {color: value});
+        }
+      });
+    },
+    [activeEditor],
+  );
 
   useEffect(() => {
     editor.getEditorState().read(() => {
@@ -360,6 +379,51 @@ export default function ToolbarPlugin({
           <i className="format strikethrough" />
         </button>
       </>
+      <Divider />
+      <DropDown
+        disabled={false}
+        buttonClassName="toolbar-item block-controls"
+        buttonLabel={`字体大小：${
+          toolbarState.editorSize === 'small'
+            ? '小'
+            : toolbarState.editorSize === 'large'
+              ? '大'
+              : '中'
+        }`}
+        buttonAriaLabel="选择编辑器显示字体大小"
+        title="编辑器显示字体大小">
+        <DropDownItem
+          className={
+            'item wide ' + (toolbarState.editorSize === 'small' ? 'active dropdown-item-active' : '')
+          }
+          onClick={() => updateToolbarState('editorSize', 'small')}>
+          <span className="text">小</span>
+        </DropDownItem>
+        <DropDownItem
+          className={
+            'item wide ' + (toolbarState.editorSize === 'medium' ? 'active dropdown-item-active' : '')
+          }
+          onClick={() => updateToolbarState('editorSize', 'medium')}>
+          <span className="text">中</span>
+        </DropDownItem>
+        <DropDownItem
+          className={
+            'item wide ' + (toolbarState.editorSize === 'large' ? 'active dropdown-item-active' : '')
+          }
+          onClick={() => updateToolbarState('editorSize', 'large')}>
+          <span className="text">大</span>
+        </DropDownItem>
+      </DropDown>
+      <Divider />
+      <DropdownColorPicker
+        disabled={!isEditable}
+        buttonClassName="toolbar-item color-picker"
+        buttonAriaLabel="设置字体颜色"
+        buttonIconClassName="icon font-color"
+        color={toolbarState.fontColor}
+        onChange={onFontColorSelect}
+        title="字体颜色"
+      />
       <Divider />
       <button
         disabled={!canToggleTrackChanges}

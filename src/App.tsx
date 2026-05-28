@@ -20,7 +20,6 @@ import {
 import {
   ListExtension,
 } from '@lexical/list';
-import {LexicalCollaboration} from '@lexical/react/LexicalCollaborationContext';
 import {LexicalExtensionComposer} from '@lexical/react/LexicalExtensionComposer';
 import {
   RichTextExtension,
@@ -176,16 +175,14 @@ function App(): JSX.Element {
 
   return (
     <MockWorkflowProvider>
-      <LexicalCollaboration>
-        <LexicalExtensionComposer extension={app} contentEditable={null}>
-          <ToolbarContext>
-            <WorkflowHeader />
-            <div className="editor-shell">
-              <Editor />
-            </div>
-          </ToolbarContext>
-        </LexicalExtensionComposer>
-      </LexicalCollaboration>
+      <LexicalExtensionComposer extension={app} contentEditable={null}>
+        <ToolbarContext>
+          <WorkflowHeader />
+          <div className="editor-shell">
+            <Editor />
+          </div>
+        </ToolbarContext>
+      </LexicalExtensionComposer>
     </MockWorkflowProvider>
   );
 }

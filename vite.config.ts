@@ -10,8 +10,6 @@ import babel from '@rollup/plugin-babel';
 import react from '@vitejs/plugin-react';
 import {defineConfig} from 'vite';
 
-import viteCopyExcalidrawAssets from './viteCopyExcalidrawAssets';
-
 // https://vitejs.dev/config/
 export default defineConfig(({mode}) => ({
   base: './',
@@ -25,20 +23,11 @@ export default defineConfig(({mode}) => ({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('excalidraw')) {
-              return 'excalidraw';
-            }
-            if (id.includes('katex')) {
-              return 'katex';
-            }
             if (id.includes('react') || id.includes('scheduler')) {
               return 'react';
             }
             if (id.includes('lexical')) {
               return 'lexical';
-            }
-            if (id.includes('yjs') || id.includes('y-websocket')) {
-              return 'yjs';
             }
             return 'vendor';
           }
@@ -71,6 +60,5 @@ export default defineConfig(({mode}) => ({
       presets: [['@babel/preset-react', {runtime: 'automatic'}]],
     }),
     react(),
-    ...viteCopyExcalidrawAssets(),
   ],
 }));

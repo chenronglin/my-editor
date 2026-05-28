@@ -1928,3 +1928,57 @@ button.item.dropdown-item-active i {
   white-space: nowrap;
   display: inline-block;
 }
+
+/* 小档 (14px) */
+.editor-container.editor-size-small .ContentEditable__root,
+.editor-container.editor-size-small .ContentEditable__placeholder {
+  font-size: 14px !important;
+}
+.editor-container.editor-size-small .PlaygroundEditorTheme__paragraph {
+  font-size: 14px !important;
+}
+.editor-container.editor-size-small .PlaygroundEditorTheme__h1 {
+  font-size: 20px !important;
+}
+.editor-container.editor-size-small .PlaygroundEditorTheme__h2 {
+  font-size: 14px !important;
+}
+.editor-container.editor-size-small .PlaygroundEditorTheme__h3 {
+  font-size: 11px !important;
+}
+
+/* 中档 (16px) */
+.editor-container.editor-size-medium .ContentEditable__root,
+.editor-container.editor-size-medium .ContentEditable__placeholder {
+  font-size: 16px !important;
+}
+.editor-container.editor-size-medium .PlaygroundEditorTheme__paragraph {
+  font-size: 16px !important;
+}
+.editor-container.editor-size-medium .PlaygroundEditorTheme__h1 {
+  font-size: 24px !important;
+}
+.editor-container.editor-size-medium .PlaygroundEditorTheme__h2 {
+  font-size: 16px !important;
+}
+.editor-container.editor-size-medium .PlaygroundEditorTheme__h3 {
+  font-size: 12px !important;
+}
+
+/* 大档 (20px) */
+.editor-container.editor-size-large .ContentEditable__root,
+.editor-container.editor-size-large .ContentEditable__placeholder {
+  font-size: 20px !important;
+}
+.editor-container.editor-size-large .PlaygroundEditorTheme__paragraph {
+  font-size: 20px !important;
+}
+.editor-container.editor-size-large .PlaygroundEditorTheme__h1 {
+  font-size: 28px !important;
+}
+.editor-container.editor-size-large .PlaygroundEditorTheme__h2 {
+  font-size: 20px !important;
+}
+.editor-container.editor-size-large .PlaygroundEditorTheme__h3 {
+  font-size: 15px !important;
+}

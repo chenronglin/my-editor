@@ -76,6 +76,7 @@ const INITIAL_TOOLBAR_STATE = {
   isCapitalize: false,
   rootType: 'root' as keyof typeof rootTypeToRootName,
   listStartNumber: null as number | null,
+  editorSize: (typeof window !== 'undefined' && (localStorage.getItem('editor-display-size') as 'small' | 'medium' | 'large')) || 'medium',
 };
 
 type ToolbarState = typeof INITIAL_TOOLBAR_STATE;
@@ -116,6 +117,12 @@ export const ToolbarContext = ({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     updateToolbarState('fontSizeInputValue', selectionFontSize.slice(0, -2));
   }, [selectionFontSize, updateToolbarState]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('editor-display-size', toolbarState.editorSize);
+    }
+  }, [toolbarState.editorSize]);
 
   const contextValue = useMemo(() => {
     return {

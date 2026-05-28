@@ -26,6 +26,7 @@ import {useEffect, useState} from 'react';
 
 import {useSettings} from './context/SettingsContext';
 import {useMockWorkflow} from './context/MockWorkflowContext';
+import {useToolbarState} from './context/ToolbarContext';
 import CommentPlugin from './plugins/CommentPlugin';
 import FloatingLinkEditorPlugin from './plugins/FloatingLinkEditorPlugin';
 import FloatingTextFormatToolbarPlugin from './plugins/FloatingTextFormatToolbarPlugin';
@@ -103,6 +104,7 @@ export default function Editor(): JSX.Element {
       listStrictIndent,
     },
   } = useSettings();
+  const {toolbarState} = useToolbarState();
   const isEditable = useLexicalEditable();
   const placeholder = '请输入正文...';
   const [floatingAnchorElem, setFloatingAnchorElem] =
@@ -188,7 +190,7 @@ export default function Editor(): JSX.Element {
       <div
         className={`editor-container ${
           displayMode === 'final' ? 'final-view' : ''
-        }`}>
+        } editor-size-${toolbarState.editorSize}`}>
         <CommentPlugin
           authorName={currentUser.name}
           canCreateComment={permissions.canCreateComment}
