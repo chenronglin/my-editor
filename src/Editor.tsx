@@ -196,10 +196,7 @@ export default function Editor(): JSX.Element {
         />
         <RevisionTrackingPlugin
           isEnabled={displayMode === 'review' && permissions.canEditContent}
-          currentUser={{
-            id: currentUser.id,
-            name: currentUser.name,
-          }}
+          currentUser={currentUser}
         />
         <PasteAsBlocksPlugin
           disabled={!permissions.canEditContent}

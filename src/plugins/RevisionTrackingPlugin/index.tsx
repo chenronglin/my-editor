@@ -17,6 +17,7 @@ import {
   $getRoot,
   $getSelection,
   $hasUpdateTag,
+  $getNodeByKey,
   $isDecoratorNode,
   $isElementNode,
   $isRangeSelection,
@@ -40,6 +41,7 @@ import {
   type RevisionNode,
   type RevisionType,
 } from '../../nodes/RevisionNode';
+
 type RevisionTrackingUser = {
   id: string;
   name: string;
@@ -273,6 +275,7 @@ function $getTextNodeForInsertedRange(
   let targetNode: TextNode | undefined;
 
   if (range.start === 0 && range.end === textLength) {
+    knownTextByKey.set(textNode.getKey(), textNode.getTextContent());
     return textNode;
   }
 
@@ -288,9 +291,7 @@ function $getTextNodeForInsertedRange(
   }
 
   for (const node of splitNodes) {
-    if (node !== targetNode) {
-      knownTextByKey.set(node.getKey(), node.getTextContent());
-    }
+    knownTextByKey.set(node.getKey(), node.getTextContent());
   }
 
   return targetNode ?? null;
@@ -304,6 +305,7 @@ function $wrapTextNodeInRevision(
   if (!textNode.isSimpleText()) {
     return;
   }
+
   const textContent = textNode.getTextContent();
   if ($hasUpdateTag(COLLABORATION_TAG) || $hasUpdateTag(HISTORIC_TAG)) {
     if (textContent === '') {
@@ -313,6 +315,7 @@ function $wrapTextNodeInRevision(
     }
     return;
   }
+
   if (textContent === '') {
     knownTextByKey.delete(textNode.getKey());
     return;
@@ -323,16 +326,12 @@ function $wrapTextNodeInRevision(
     return;
   }
 
-  const revisionType: RevisionType = 'insert';
   let targetNode: TextNode | null = textNode;
-
   const previousText = knownTextByKey.get(textNode.getKey());
+
   if (previousText !== undefined) {
-    const insertedRange = getInsertedTextRange(
-      previousText,
-      textNode.getTextContent(),
-    );
-    knownTextByKey.set(textNode.getKey(), textNode.getTextContent());
+    const insertedRange = getInsertedTextRange(previousText, textContent);
+    knownTextByKey.set(textNode.getKey(), textContent);
     if (insertedRange === null) {
       return;
     }
@@ -344,12 +343,16 @@ function $wrapTextNodeInRevision(
     if (targetNode === null) {
       return;
     }
+  } else {
+    knownTextByKey.set(textNode.getKey(), textContent);
   }
 
   const targetParent = targetNode.getParent();
   if (targetParent === null || $isRevisionNode(targetParent)) {
     return;
   }
+
+  const revisionType: RevisionType = 'insert';
   const previousSibling = targetNode.getPreviousSibling();
   if (isSameRevision(previousSibling, currentUser, revisionType)) {
     previousSibling.append(targetNode);
@@ -372,6 +375,22 @@ function $wrapTextNodeInRevision(
   revisionNode.append(targetNode);
 }
 
+function $markDeletion(
+  currentUser: RevisionTrackingUser,
+  isBackward: boolean,
+  granularity: 'character' | 'word',
+): boolean {
+  const selection = $getSelection();
+  if (!$isRangeSelection(selection)) {
+    return false;
+  }
+  const deletionSelection = selection.clone();
+  if (deletionSelection.isCollapsed()) {
+    deletionSelection.modify('extend', isBackward, granularity);
+  }
+  return $deleteSelectionAsRevision(deletionSelection, currentUser);
+}
+
 export default function RevisionTrackingPlugin({
   currentUser,
   isEnabled,
@@ -385,16 +404,45 @@ export default function RevisionTrackingPlugin({
     if (!isEnabled) {
       return;
     }
+
+    const dirtyTextNodes = new Set<string>();
     const knownTextByKey = new Map<string, string>();
+
     editor.getEditorState().read(() => {
       $rememberTextNodes($getRoot(), knownTextByKey);
     });
 
+    const $commitDirtyTextNodes = () => {
+      if (dirtyTextNodes.size === 0) {
+        return;
+      }
+
+      for (const key of dirtyTextNodes) {
+        const node = $getNodeByKey(key);
+        if ($isTextNode(node) && node.isAttached()) {
+          $wrapTextNodeInRevision(node, currentUser, knownTextByKey);
+        } else {
+          knownTextByKey.delete(key);
+        }
+      }
+      dirtyTextNodes.clear();
+    };
+
+    const commitDirtyTextNodes = () => {
+      if (dirtyTextNodes.size === 0) {
+        return;
+      }
+      editor.update(() => {
+        $commitDirtyTextNodes();
+      });
+    };
+
     const unregisterMutation = editor.registerMutationListener(
       TextNode,
-      mutations => {
+      (mutations) => {
         for (const [key, mutation] of mutations) {
           if (mutation === 'destroyed') {
+            dirtyTextNodes.delete(key);
             knownTextByKey.delete(key);
           }
         }
@@ -403,8 +451,44 @@ export default function RevisionTrackingPlugin({
 
     const unregisterTransform = editor.registerNodeTransform(
       TextNode,
-      textNode => {
-        $wrapTextNodeInRevision(textNode, currentUser, knownTextByKey);
+      (textNode) => {
+        if (!textNode.isSimpleText()) {
+          return;
+        }
+        const parent = textNode.getParent();
+        if (parent === null || $isRevisionNode(parent)) {
+          return;
+        }
+        if ($hasUpdateTag(COLLABORATION_TAG) || $hasUpdateTag(HISTORIC_TAG)) {
+          return;
+        }
+
+        dirtyTextNodes.add(textNode.getKey());
+      },
+    );
+
+    const onFocusOut = (event: FocusEvent) => {
+      const nextTarget = event.relatedTarget;
+      const rootElement = editor.getRootElement();
+      if (
+        rootElement !== null &&
+        nextTarget instanceof Node &&
+        rootElement.contains(nextTarget)
+      ) {
+        return;
+      }
+      commitDirtyTextNodes();
+    };
+
+    const unregisterFocusOut = editor.registerRootListener(
+      (rootElement, prevRootElement) => {
+        if (prevRootElement !== null) {
+          prevRootElement.removeEventListener('focusout', onFocusOut);
+        }
+
+        if (rootElement !== null) {
+          rootElement.addEventListener('focusout', onFocusOut);
+        }
       },
     );
 
@@ -412,36 +496,23 @@ export default function RevisionTrackingPlugin({
       editor.registerCommand(
         DELETE_CHARACTER_COMMAND,
         (isBackward) => {
-          const selection = $getSelection();
-          if (!$isRangeSelection(selection)) {
-            return false;
-          }
-          const deletionSelection = selection.clone();
-          if (deletionSelection.isCollapsed()) {
-            deletionSelection.modify('extend', isBackward, 'character');
-          }
-          return $deleteSelectionAsRevision(deletionSelection, currentUser);
+          $commitDirtyTextNodes();
+          return $markDeletion(currentUser, isBackward, 'character');
         },
         COMMAND_PRIORITY_CRITICAL,
       ),
       editor.registerCommand(
         DELETE_WORD_COMMAND,
         (isBackward) => {
-          const selection = $getSelection();
-          if (!$isRangeSelection(selection)) {
-            return false;
-          }
-          const deletionSelection = selection.clone();
-          if (deletionSelection.isCollapsed()) {
-            deletionSelection.modify('extend', isBackward, 'word');
-          }
-          return $deleteSelectionAsRevision(deletionSelection, currentUser);
+          $commitDirtyTextNodes();
+          return $markDeletion(currentUser, isBackward, 'word');
         },
         COMMAND_PRIORITY_CRITICAL,
       ),
       editor.registerCommand(
         REMOVE_TEXT_COMMAND,
         () => {
+          $commitDirtyTextNodes();
           const selection = $getSelection();
           return (
             $isRangeSelection(selection) &&
@@ -454,8 +525,14 @@ export default function RevisionTrackingPlugin({
     );
 
     return () => {
+      commitDirtyTextNodes();
+      const rootElement = editor.getRootElement();
+      if (rootElement !== null) {
+        rootElement.removeEventListener('focusout', onFocusOut);
+      }
       unregisterMutation();
       unregisterTransform();
+      unregisterFocusOut();
       unregisterCommands();
     };
   }, [currentUser, editor, isEnabled]);
