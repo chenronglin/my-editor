@@ -127,14 +127,7 @@ function $wrapSelectionInRevisionNode(
     if ($isTextNode(node)) {
       targetNode = node;
     } else if ($isRevisionNode(node)) {
-      if (
-        data.revisionType === 'delete' &&
-        node.getRevisionType() === 'insert' &&
-        node.getAuthorId() === data.authorId
-      ) {
-        node.remove();
-      }
-      continue;
+      targetNode = node;
     } else if (
       ($isElementNode(node) || $isDecoratorNode(node)) &&
       node.isInline()
@@ -150,14 +143,23 @@ function $wrapSelectionInRevisionNode(
           revisionAncestor.getRevisionType() === 'insert' &&
           revisionAncestor.getAuthorId() === data.authorId
         ) {
-          targetNode.remove();
-          if (revisionAncestor.getChildren().length === 0) {
+          if (targetNode.is(revisionAncestor)) {
             revisionAncestor.remove();
+          } else {
+            targetNode.remove();
+            if (revisionAncestor.getChildren().length === 0) {
+              revisionAncestor.remove();
+            }
           }
+          currentNodeParent = undefined;
+          lastCreatedRevisionNode = undefined;
+          continue;
         }
-        currentNodeParent = undefined;
-        lastCreatedRevisionNode = undefined;
-        continue;
+        if (data.revisionType !== 'delete') {
+          currentNodeParent = undefined;
+          lastCreatedRevisionNode = undefined;
+          continue;
+        }
       }
       if (targetNode.is(currentNodeParent)) {
         continue;
